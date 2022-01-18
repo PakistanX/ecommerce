@@ -41,4 +41,4 @@ class TrackingMiddleware(MiddlewareMixin):
             called_from = u'middleware with request path: {request}, referrer: {referrer}'.format(
                 request=request.get_full_path(),
                 referrer=request.META.get('HTTP_REFERER'))
-            user.add_lms_user_id('ecommerce_missing_lms_user_id_middleware', called_from)
+            user.add_lms_user_id('ecommerce_missing_lms_user_id_middleware', called_from, allow_missing=True)
