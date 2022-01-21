@@ -121,11 +121,19 @@ PAYMENT_PROCESSOR_CONFIG = {
         },
         'paypal': {
             'mode': 'sandbox',
-            'client_id': 'AVcS4ZWEk7IPqaJibex3bCR0_lykVQ2BHdGz6JWVik0PKWGTOQzWMBOHRppPwFXMCPUqRsoBUDSE-ro5',
-            'client_secret': 'EHNgP4mXL5mI54DQI1-EgXo6y0BDUzj5x1_8gQD0dNWSWS6pcLqlmGq8f5En6oos0z2L37a_EJ27mJ_a',
+            'client_id': 'AUWV9vrkEy-21C5YezuBxuXBKUxJNh3_t56JvF5noFWM-sADk0-_zH0BVM9m-JHlx3E0cdy6uMdPs9uo',
+            'client_secret': 'EEL8Ac88aG-JubVna_7lShPebRlpJmZwwVz3ZzXxVYVTITEBxNhgSNAQJRFyfk_zUQK9V41RhIlj-9EY',
             'receipt_path': PAYMENT_PROCESSOR_RECEIPT_PATH,
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
+        },
+        'easypaisa': {
+            'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
+            'client_id': '37034e2f-6c75-466a-b7aa-9b9637a6a10b',
+            'client_secret': 'lT1mU0lS5yJ8wE3aT1jC0lB8oT4xJ4jW4jL0nR2uP6hL1kN0iX',
+            'error_url': PAYMENT_PROCESSOR_ERROR_PATH,
+            'mode': 'sandbox',
+            'receipt_url': PAYMENT_PROCESSOR_RECEIPT_PATH,
         },
         'stripe': {
             'publishable_key': 'fake-publishable-key',

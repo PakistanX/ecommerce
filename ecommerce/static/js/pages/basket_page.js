@@ -331,6 +331,20 @@ define([
                 }
             },
 
+            startEasyPaisaLogin: function (number){
+                $.ajax({
+                    url: '/api/v2/payment/easypaisa/login?number=' + number,
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': Cookies.get('ecommerce_csrftoken')
+                    },
+                    success: function(data){
+                        console.log(data)
+                    },
+                    error: BasketPage.onFail
+                });
+            },
+
             onReady: function() {
                 var $paymentButtons = $('.payment-buttons'),
                     basketId = $paymentButtons.data('basket-id');
@@ -529,6 +543,30 @@ define([
                         return promise;
                     });
                     BasketPage.checkoutPayment(data);
+                });
+
+                $paymentButtons.find('.tab-btn').click(function(e) {
+
+                    var targetVal, elementVal;
+
+                    $.each($('.tab-content'), function(index, element){
+                        element = $(element)
+                        elementVal = element.attr('id');
+                        targetVal = $(e.target).attr('data-value');
+                        elementVal === targetVal ? element.removeClass('closed-tab') : element.addClass('closed-tab');
+                    });
+
+                    $.each($('.tab-btn'), function(index, element){
+                        element = $(element);
+                        targetVal = $(e.target).attr('data-value');
+                        elementVal = element.attr('data-value');
+                        elementVal === targetVal ? element.addClass('active') : element.removeClass('active')
+                    });
+                });
+
+                $('#easypaisa-fbtn').click(function(e) {
+                    var number = $('#easypaisa-number').value();
+                    BasketPage.startEasyPaisaLogin();
                 });
 
                 // Increment the quantity field until max
