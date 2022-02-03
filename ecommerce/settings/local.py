@@ -127,14 +127,6 @@ PAYMENT_PROCESSOR_CONFIG = {
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
         },
-        'easypaisa': {
-            'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
-            'client_id': '37034e2f-6c75-466a-b7aa-9b9637a6a10b',
-            'client_secret': 'lT1mU0lS5yJ8wE3aT1jC0lB8oT4xJ4jW4jL0nR2uP6hL1kN0iX',
-            'error_url': PAYMENT_PROCESSOR_ERROR_PATH,
-            'mode': 'sandbox',
-            'receipt_url': PAYMENT_PROCESSOR_RECEIPT_PATH,
-        },
         'stripe': {
             'publishable_key': 'fake-publishable-key',
             'secret_key': 'fake-secret-key',
