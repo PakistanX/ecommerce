@@ -333,13 +333,14 @@ define([
 
             startEasyPaisaLogin: function (number){
                 $.ajax({
-                    url: '/api/v2/payment/easypaisa/login?number=' + number,
+                    url: '/payment/easypaisa/login?number=' + number,
                     method: 'GET',
                     headers: {
                         'X-CSRFToken': Cookies.get('ecommerce_csrftoken')
                     },
                     success: function(data){
-                        console.log(data)
+                        console.log(data);
+                        $('#easypaisa').html(data);
                     },
                     error: BasketPage.onFail
                 });
@@ -565,7 +566,7 @@ define([
                 });
 
                 $('#easypaisa-fbtn').click(function(e) {
-                    var number = $('#easypaisa-number').value();
+                    var number = $('#easypaisa-number').val();
                     BasketPage.startEasyPaisaLogin();
                 });
 

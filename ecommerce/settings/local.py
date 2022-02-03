@@ -121,8 +121,8 @@ PAYMENT_PROCESSOR_CONFIG = {
         },
         'paypal': {
             'mode': 'sandbox',
-            'client_id': 'AUWV9vrkEy-21C5YezuBxuXBKUxJNh3_t56JvF5noFWM-sADk0-_zH0BVM9m-JHlx3E0cdy6uMdPs9uo',
-            'client_secret': 'EEL8Ac88aG-JubVna_7lShPebRlpJmZwwVz3ZzXxVYVTITEBxNhgSNAQJRFyfk_zUQK9V41RhIlj-9EY',
+            'client_id': 'AVcS4ZWEk7IPqaJibex3bCR0_lykVQ2BHdGz6JWVik0PKWGTOQzWMBOHRppPwFXMCPUqRsoBUDSE-ro5',
+            'client_secret': 'EHNgP4mXL5mI54DQI1-EgXo6y0BDUzj5x1_8gQD0dNWSWS6pcLqlmGq8f5En6oos0z2L37a_EJ27mJ_a',
             'receipt_path': PAYMENT_PROCESSOR_RECEIPT_PATH,
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
