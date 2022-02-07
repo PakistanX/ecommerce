@@ -42,8 +42,6 @@
         <div class="basket {% if enable_client_side_checkout %}basket-client-side{% endif %}">
             <div class="container">
                 {# Use a partial template so that AJAX can be used to re-render basket #}
-                {{ basket.num_lines }}
-                {{ basket.id }}
                 {% if basket.is_empty %}
                     {% block emptybasket %}
                         <div class="depth depth-2 message-error-content">
