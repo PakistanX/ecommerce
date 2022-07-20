@@ -39,6 +39,7 @@ path.py==7.2
 paypalrestsdk
 premailer==2.9.2
 pycountry==17.1.8
+pycryptodome==3.15.0
 pygments
 python-dateutil
 python3-openid>=3

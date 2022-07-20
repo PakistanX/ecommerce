@@ -21,8 +21,7 @@ PAYPAL_URLS = [
 ]
 
 EASYPAISA_URLS = [
-    url(r'^login/$', easypaisa.LoginToEasyPaisaView.as_view(), name='easypaisa-login'),
-    url(r'^profiles/$', paypal.PaypalProfileAdminView.as_view(), name='profiles'),
+    url(r'^postback/$', easypaisa.PostBackView.as_view(), name='postback'),
 ]
 
 SDN_URLS = [
