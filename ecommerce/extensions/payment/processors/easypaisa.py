@@ -109,6 +109,8 @@ class EasyPaisa(BasePaymentProcessor):
             GatewayError: Indicates a general error or unexpected behavior on the part of PayPal which prevented
                 a payment from being created.
         """
+        logger.info('Starting easypaisa payment')
+        logger.info(settings.PAYMENT_PROCESSOR_CONFIG)
         partner_code = basket.site.siteconfiguration.partner.short_code
         easy_paisa_config = settings.PAYMENT_PROCESSOR_CONFIG[partner_code.lower()][self.NAME]
         my_date = datetime.now() + timedelta(hours=5)
@@ -128,6 +130,7 @@ class EasyPaisa(BasePaymentProcessor):
         })
         query_str = urlencode(data)
         query_str = '{}{}'.format(query_str, my_date.strftime("%Y-%m-%dT%H:%M:%S"))
+        logger.info('Generated str: {}'.format(query_str))
         hashed = aes.encrypt(query_str)
         str_param = self.create_ordered_dict({
             'storeId': store_id,
