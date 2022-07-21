@@ -127,10 +127,9 @@ class EasyPaisa(BasePaymentProcessor):
             'paymentMethod': payment_method,
             'postBackURL': return_url,
             'storeId': store_id,
-            'timeStamp': '',
+            'timeStamp': my_date.strftime("%Y-%m-%dT%H:%M:%S"),
         })
-        query_str = urlencode(data)
-        query_str = '{}{}'.format(query_str, my_date.strftime("%Y-%m-%dT%H:%M:%S"))
+        query_str = urlencode(data, safe=':/')
         logger.info('Generated str: {}'.format(query_str))
         hashed = aes.encrypt(query_str)
         str_param = self.create_ordered_dict({
