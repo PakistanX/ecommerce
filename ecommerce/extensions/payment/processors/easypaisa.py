@@ -125,6 +125,7 @@ class EasyPaisa(BasePaymentProcessor):
             'amount': 1,
             'orderRefNum': order_id,
             'paymentMethod': payment_method,
+            'postBackURL': return_url,
             'storeId': store_id,
             'timeStamp': '',
         })
@@ -143,7 +144,7 @@ class EasyPaisa(BasePaymentProcessor):
             'bankIdentificationNumber': '',
             'encryptedHashRequest': hashed,
             'merchantPaymentMethod': '',
-            'postBackURL': '',
+            'postBackURL': return_url,
             'signature': '',
         })
         return {

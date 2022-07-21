@@ -14,4 +14,4 @@ class PostBackView(APIView):
     authentication_classes = [authentication.SessionAuthentication]
 
     def post(self, request):
-        logger.info(request.POST)
+        logger.info('\n\n\n{}\n\n\n'.format(request.POST))
