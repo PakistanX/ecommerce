@@ -10,8 +10,8 @@ from urllib.parse import urlencode
 from Crypto.Cipher import AES
 from django.conf import settings
 from django.urls import reverse
-from six.moves.urllib.parse import urljoin
 from oscar.apps.payment.exceptions import GatewayError
+from six.moves.urllib.parse import urljoin
 
 from ecommerce.core.url_utils import get_ecommerce_url
 from ecommerce.extensions.payment.processors import BasePaymentProcessor, HandledProcessorResponse
