@@ -614,6 +614,7 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
                     label_suffix=''
                 ),
                 'paypal_enabled': 'paypal' in (p.NAME for p in payment_processors),
+                'easypaisa_enabled': 'easypaisa' in (p.NAME for p in payment_processors),
                 # Assumption is that the credit card duration is 15 years
                 'years': list(six.moves.range(current_year, current_year + 16)),
             }
