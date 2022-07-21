@@ -21,7 +21,7 @@ PAYPAL_URLS = [
 ]
 
 EASYPAISA_URLS = [
-    url(r'^postback/$', easypaisa.PostBackView.as_view(), name='postback'),
+    url(r'^postback/$', easypaisa.EasyPaisaPostBackView.as_view(), name='postback'),
 ]
 
 SDN_URLS = [
