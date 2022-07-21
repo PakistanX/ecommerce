@@ -12,12 +12,12 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import RedirectView, TemplateView
+from opaque_keys.edx.keys import CourseKey
 from oscar.apps.checkout.views import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from oscar.core.loading import get_class, get_model
-from opaque_keys.edx.keys import CourseKey
 from requests.exceptions import ConnectionError as ReqConnectionError
 from requests.exceptions import Timeout
-from slumber.exceptions import SlumberHttpBaseException, SlumberBaseException
+from slumber.exceptions import SlumberBaseException, SlumberHttpBaseException
 
 from ecommerce.core.url_utils import (
     get_lms_courseware_url,
