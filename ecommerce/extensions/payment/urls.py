@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from django.conf.urls import include, url
 
-from ecommerce.extensions.payment.views import PaymentFailedView, SDNFailure, cybersource, paypal, stripe, easypaisa
+from ecommerce.extensions.payment.views import PaymentFailedView, SDNFailure, cybersource, easypaisa, paypal, stripe
 
 CYBERSOURCE_APPLE_PAY_URLS = [
     url(r'^authorize/$', cybersource.CybersourceApplePayAuthorizationView.as_view(), name='authorize'),
@@ -21,7 +21,7 @@ PAYPAL_URLS = [
 ]
 
 EASYPAISA_URLS = [
-    url(r'^postback/$', easypaisa.PostBackView.as_view(), name='postback'),
+    url(r'^postback/$', easypaisa.EasyPaisaPostBackView.as_view(), name='postback'),
 ]
 
 SDN_URLS = [

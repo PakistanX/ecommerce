@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 from Crypto.Cipher import AES
 from django.conf import settings
 from django.urls import reverse
+from oscar.apps.payment.exceptions import GatewayError
 from six.moves.urllib.parse import urljoin
 
 from ecommerce.core.url_utils import get_ecommerce_url
@@ -47,8 +48,7 @@ class EasyPaisa(BasePaymentProcessor):
     """EasyPaisa API implementation."""
 
     NAME = 'easypaisa'
-
-    # DEFAULT_PROFILE_NAME = 'default'
+    SUCCESS_STATUS = '0000'
 
     def __init__(self, site):
         """
@@ -125,11 +125,11 @@ class EasyPaisa(BasePaymentProcessor):
             'amount': 1,
             'orderRefNum': order_id,
             'paymentMethod': payment_method,
+            'postBackURL': return_url,
             'storeId': store_id,
-            'timeStamp': '',
+            'timeStamp': my_date.strftime("%Y-%m-%dT%H:%M:%S"),
         })
-        query_str = urlencode(data)
-        query_str = '{}{}'.format(query_str, my_date.strftime("%Y-%m-%dT%H:%M:%S"))
+        query_str = urlencode(data, safe=':/')
         logger.info('Generated str: {}'.format(query_str))
         hashed = aes.encrypt(query_str)
         str_param = self.create_ordered_dict({
@@ -143,12 +143,13 @@ class EasyPaisa(BasePaymentProcessor):
             'bankIdentificationNumber': '',
             'encryptedHashRequest': hashed,
             'merchantPaymentMethod': '',
-            'postBackURL': '',
+            'postBackURL': return_url,
             'signature': '',
         })
-        return {
-            'payment_page_url': '{}?{}'.format(api_url, urlencode(str_param))
-        }
+        entry = self.record_processor_response(data, transaction_id=order_id, basket=basket)
+        logger.info("Successfully created EasyPaisa payment [%s] for basket [%d].", order_id, basket.id)
+        data['payment_page_url'] = '{}?{}'.format(api_url, urlencode(str_param))
+        return data
 
     def handle_processor_response(self, response, basket=None):
         """
@@ -160,13 +161,43 @@ class EasyPaisa(BasePaymentProcessor):
         Keyword Arguments:
             basket (Basket): Basket being purchased via the payment processor.
 
+        Raises:
+            GatewayError: Indicates a general error or unexpected behavior on the part of PayPal which prevented
+                an approved payment from being executed.
+
         Returns:
             HandledProcessorResponse
         """
         order_id = response.get('orderRefNumber')
         logger.info('\n\n\n{}\n\n\n'.format(response))
 
-        # TODO: Raise Gateway error on failure.
+        response_statuses = {
+            '0001': 'System Error',
+            '0002': 'Required Field Missing',
+            '0005': 'Merchant Account Not Active',
+            '0006': 'Invalid Store ID',
+            '0007': 'Store Not Active',
+            '0008': 'Payment Method Not Enabled',
+            '0010': 'Invalid Credentials',
+            '0013': 'Low Balance',
+            '0014': 'Account Does Not Exist'
+        }
+
+        try:
+            payment_status = response['status']
+            assert payment_status == self.SUCCESS_STATUS
+        except KeyError:
+            msg = 'Response did not contain "status": {}'.format(response)
+            self.record_processor_response({'error_msg': msg}, transaction_id=order_id, basket=basket)
+            raise GatewayError()
+
+        if payment_status != self.SUCCESS_STATUS:
+            msg = 'Payment unsuccessful due to {}:{}'.format(
+                payment_status,
+                response_statuses.get(payment_status, 'Status Code not found in expected responses')
+            )
+            self.record_processor_response({'error_msg': msg}, transaction_id=order_id, basket=basket)
+            raise GatewayError(msg)
 
         self.record_processor_response(response, transaction_id=order_id, basket=basket)
         logger.info("Successfully recorded EasyPaisa payment [%s] for basket [%d].", order_id, basket.id)
