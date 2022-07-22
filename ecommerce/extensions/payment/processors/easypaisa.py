@@ -111,15 +111,13 @@ class EasyPaisa(BasePaymentProcessor):
         """
         logger.info('Starting easypaisa payment')
         logger.info(settings.PAYMENT_PROCESSOR_CONFIG)
-        partner_code = basket.site.siteconfiguration.partner.short_code
-        easy_paisa_config = settings.PAYMENT_PROCESSOR_CONFIG[partner_code.lower()][self.NAME]
         my_date = datetime.now() + timedelta(hours=5)
-        aes = AESCipher(easy_paisa_config['hash_key'])
-        store_id = easy_paisa_config['store_id']
+        aes = AESCipher(self.configuration['hash_key'])
+        store_id = self.configuration['store_id']
         order_id = basket.order_number
-        payment_method = easy_paisa_config['payment_method']
+        payment_method = self.configuration['payment_method']
         amount = basket.total_incl_tax
-        api_url = easy_paisa_config['api_url']
+        api_url = self.configuration['api_url']
         return_url = urljoin(get_ecommerce_url(), reverse('easypaisa:postback'))
         data = self.create_ordered_dict({
             'amount': 1,
