@@ -68,7 +68,6 @@ class EasyPaisaPostBackView(EdxOrderPlacementMixin, View):
         """Handle an incoming user returned to us by EasyPaisa after approving payment."""
         logger.info('EasyPaisa postBack response{}'.format(request.GET))
         payment_id = request.GET.get('orderRefNumber')
-        logger.info(u"Payment [%s] completed]", payment_id)
 
         easypaisa_response = request.GET.dict()
         basket = self._get_basket(payment_id)
