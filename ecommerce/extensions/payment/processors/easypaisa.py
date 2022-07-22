@@ -65,7 +65,7 @@ class EasyPaisa(BasePaymentProcessor):
 
     @property
     def error_url(self):
-        return get_ecommerce_url(self.configuration['error_path'])
+        return get_ecommerce_url(self.configuration['error_url'])
 
     def get_courseid_title(self, line):
         """
@@ -110,7 +110,6 @@ class EasyPaisa(BasePaymentProcessor):
                 a payment from being created.
         """
         logger.info('Starting easypaisa payment')
-        logger.info(settings.PAYMENT_PROCESSOR_CONFIG)
         my_date = datetime.now() + timedelta(hours=5)
         aes = AESCipher(self.configuration['hash_key'])
         store_id = self.configuration['store_id']
@@ -183,7 +182,6 @@ class EasyPaisa(BasePaymentProcessor):
 
         try:
             payment_status = response['status']
-            assert payment_status == self.SUCCESS_STATUS
         except KeyError:
             msg = 'Response did not contain "status": {}'.format(response)
             self.record_processor_response({'error_msg': msg}, transaction_id=order_id, basket=basket)
