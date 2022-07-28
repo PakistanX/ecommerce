@@ -23,7 +23,7 @@ class LineInlineExtended(LineInline):
 class OrderAdminExtended(OrderAdmin):
     inlines = [LineInlineExtended]
     list_display = ('partner',) + OrderAdmin.list_display
-    readonly_fields = ('basket',) + OrderAdmin.readonly_fields
+    readonly_fields = ()
     show_full_result_count = False
 
     def get_queryset(self, request):
