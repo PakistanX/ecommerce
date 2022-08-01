@@ -19,6 +19,7 @@ class CheckoutConfig(apps.CheckoutConfig):
         self.cancel_checkout = get_class('checkout.views', 'CancelCheckoutView')
         self.checkout_error = get_class('checkout.views', 'CheckoutErrorView')
         self.receipt_response = get_class('checkout.views', 'ReceiptResponseView')
+        self.default_view = get_class('checkout.views', 'DefaultView')
 
     def get_urls(self):
         urls = [
@@ -27,7 +28,7 @@ class CheckoutConfig(apps.CheckoutConfig):
             url(r'^error/', self.checkout_error.as_view(), name='error'),
             url(r'^receipt/', self.receipt_response.as_view(), name='receipt'),
 
-            url(r'^$', self.index_view.as_view(), name='index'),
+            url(r'^$', self.default_view.as_view(), name='index'),
 
             # Uncomment this when we need these, for now these are not implemented.
 

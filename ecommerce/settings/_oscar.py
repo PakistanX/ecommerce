@@ -121,6 +121,12 @@ AUTHENTICATION_BACKENDS = (
 )
 
 OSCAR_DEFAULT_CURRENCY = 'PKR'
+
+OSCAR_CURRENCY_FORMAT = {
+    'PKR': {
+        'currency': 'PKR ',
+    }
+}
 # END ORDER PROCESSING
 
 
