@@ -344,3 +344,11 @@ class ReceiptResponseView(ThankYouView):
         #     messages.add_message(request, messages.INFO, message, extra_tags='safe')
         #     return learner_portal_url
         return None
+
+
+class DefaultView(TemplateView):
+    """Default view for pages that are not yet implemented."""
+
+    def get(self, request, *args, **kwargs):
+        """Raise 404 for pages not yet implemented."""
+        raise Http404
