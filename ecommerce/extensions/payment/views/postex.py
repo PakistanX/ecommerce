@@ -65,7 +65,7 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
     authentication_classes = ()
 
-    def post(self, request):
+    def get(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
         logger.info('PostEx postBack response{}'.format(request.data))
         logger.info(request.META.get('REMOTE_ADDR'))
