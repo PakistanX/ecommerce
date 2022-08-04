@@ -9,7 +9,7 @@ from oscar.apps.partner import strategy
 from oscar.apps.payment.exceptions import PaymentError
 from oscar.core.loading import get_class, get_model
 from rest_framework.views import APIView
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_403_FORBIDDEN
 from rest_framework.response import Response
 
 from ecommerce.extensions.basket.utils import basket_add_organization_attribute
@@ -63,16 +63,26 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
 class PostExPostBackAPI(PostExPaymentResponse, APIView):
     """Handle response from PostEx API."""
 
+    authentication_classes = ()
+
     def post(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
-        logger.info('PostEx postBack response{}'.format(request.POST))
-        payment_id = request.POST.get('orderRefNumber')
-        postex_response = request.POST.dict()
+        logger.info('PostEx postBack response{}'.format(request.data))
+        logger.info(request.META.get('REMOTE_ADDR'))
+        logger.info(request.META.get('HTTP_X_FORWARDED_FOR'))
+        payment_id = request.data.get('orderRefNumber')
+        postex_response = request.data
+        logger.info(self.payment_processor.configuration)
+
+        if request.META.get('HTTP_HOST') != self.payment_processor.configuration['domain']:
+            return Response(HTTP_403_FORBIDDEN)
+
         basket = self._get_basket(payment_id)
         response = Response(HTTP_200_OK)
 
         if not basket:
-            return redirect(self.payment_processor.error_url)
+            logger.error('Basket not found for {}'.format(postex_response))
+            return response
 
         receipt_url = get_receipt_page_url(
             order_number=basket.order_number,
