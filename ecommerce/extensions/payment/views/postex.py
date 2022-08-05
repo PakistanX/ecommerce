@@ -74,6 +74,16 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
         postex_response = request.data
         logger.info(self.payment_processor.configuration)
 
+        self.payment_processor.record_processor_response(
+            {
+                'response': postex_response,
+                'remote': request.META.get('REMOTE_ADDR'),
+                'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
+                'host': request.META.get('HTTP_HOST'),
+            },
+            transaction_id=payment_id,
+        )
+
         if request.META.get('HTTP_HOST') != self.payment_processor.configuration['domain']:
             return Response(HTTP_403_FORBIDDEN)
 
