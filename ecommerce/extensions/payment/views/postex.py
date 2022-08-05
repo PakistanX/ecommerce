@@ -65,7 +65,7 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
     authentication_classes = ()
 
-    def get(self, request):
+    def process(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
         logger.info('PostEx postBack response{}'.format(request.data))
         logger.info(request.META.get('REMOTE_ADDR'))
@@ -113,6 +113,14 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
             self.log_order_placement_exception(basket.order_number, basket.id)
 
         return response
+
+    def get(self, request):
+        logger.info('Received GET request.')
+        self.process(request)
+
+    def post(self, request):
+        logger.info('Received POST request.')
+        self.process(request)
 
 
 class PostExPostBackView(EdxOrderPlacementMixin, View):
