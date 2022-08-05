@@ -65,14 +65,24 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
     authentication_classes = ()
 
+    @staticmethod
+    def _send_email(user, course_key, site_configuration):
+        """Send email notification to learner after enrollment."""
+        api_url = site_configuration.commerce_api_client
+        logger.info('username:{} course_key:{}'.format(user, course_key))
+        try:
+            api_resource_name = 'enrollment_mail/{}/{}'.format(user, course_key)
+            endpoint = getattr(api_url, api_resource_name)
+            endpoint().get()
+        except Exception:  # pylint: disable=broad-except
+            logger.exception('Failed to send enrollment notification for [%s] [%s] from LMS.', user, course_key)
+
     def process(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
         logger.info('PostEx postBack response{}'.format(request.data))
-        logger.info(request.META.get('REMOTE_ADDR'))
-        logger.info(request.META.get('HTTP_X_FORWARDED_FOR'))
+
         payment_id = request.data.get('orderRefNumber')
         postex_response = request.data
-        logger.info(self.payment_processor.configuration)
 
         self.payment_processor.record_processor_response(
             {
@@ -81,14 +91,16 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
                 'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
                 'host': request.META.get('HTTP_HOST'),
             },
-            transaction_id=payment_id,
+            transaction_id='PostEx for {}'.format(payment_id),
         )
-
-        if request.META.get('HTTP_HOST') != self.payment_processor.configuration['domain']:
-            return Response(HTTP_403_FORBIDDEN)
 
         basket = self._get_basket(payment_id)
         response = Response(HTTP_200_OK)
+
+        self._send_email(basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
+
+        if request.META.get('HTTP_HOST') != self.payment_processor.configuration['domain']:
+            return Response(HTTP_403_FORBIDDEN)
 
         if not basket:
             logger.error('Basket not found for {}'.format(postex_response))
@@ -122,15 +134,18 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
         except Exception:  # pylint: disable=broad-except
             self.log_order_placement_exception(basket.order_number, basket.id)
 
+        self._send_email(basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
         return response
 
     def get(self, request):
+        """Handle GET request for PostEx IPN."""
         logger.info('Received GET request.')
-        self.process(request)
+        return self.process(request)
 
     def post(self, request):
+        """Handle POST request for PostEx IPN."""
         logger.info('Received POST request.')
-        self.process(request)
+        return self.process(request)
 
 
 class PostExPostBackView(EdxOrderPlacementMixin, View):
@@ -138,38 +153,6 @@ class PostExPostBackView(EdxOrderPlacementMixin, View):
 
     def get(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
-        logger.info('PostEx postBack response{}'.format(request.GET))
-        payment_id = request.POST.get('orderRefNumber')
-        postex_response = request.POST.dict()
-        basket = self._get_basket(payment_id)
-
-        if not basket:
-            return redirect(self.payment_processor.error_url)
-
-        receipt_url = get_receipt_page_url(
-            order_number=basket.order_number,
-            site_configuration=basket.site.siteconfiguration,
-            disable_back_button=True,
-        )
-
-        try:
-            with transaction.atomic():
-                try:
-                    self.handle_payment(postex_response, basket)
-                except PaymentError:
-                    return redirect(self.payment_processor.error_url)
-        except:  # pylint: disable=bare-except
-            logger.exception('Attempts to handle payment for basket [%d] failed.', basket.id)
-            return redirect(receipt_url)
-
-        try:
-            order = self.create_order(request, basket)
-        except Exception:  # pylint: disable=broad-except
-            return redirect(receipt_url)
-
-        try:
-            self.handle_post_order(order)
-        except Exception:  # pylint: disable=broad-except
-            self.log_order_placement_exception(basket.order_number, basket.id)
-
-        return redirect(receipt_url)
+        logger.info('PostEx postBack response after button click')
+        # TODO: Write logic for verifying payment using order_id and then redirecting learner to error/receipt page.
+        return redirect(self.payment_processor.error_url)
