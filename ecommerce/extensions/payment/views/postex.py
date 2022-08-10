@@ -81,8 +81,8 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
         """Handle an incoming user returned to us by PostEx after approving payment."""
         logger.info('PostEx postBack response{}'.format(request.query_params))
 
-        payment_id = request.query_params.get('orderRefNumber')
         postex_response = request.query_params.dict()
+        payment_id = postex_response.get('orderRefNum')
 
         self.payment_processor.record_processor_response(
             {
