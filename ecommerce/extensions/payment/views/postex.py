@@ -79,10 +79,10 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
     def process(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
-        logger.info('PostEx postBack response{}'.format(request.data))
+        logger.info('PostEx postBack response{}'.format(request.query_params))
 
-        payment_id = request.data.get('orderRefNumber')
-        postex_response = request.data
+        payment_id = request.query_params.get('orderRefNumber')
+        postex_response = request.query_params.dict()
 
         self.payment_processor.record_processor_response(
             {
