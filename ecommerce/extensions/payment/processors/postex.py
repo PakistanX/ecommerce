@@ -118,7 +118,7 @@ class PostEx(BasePaymentProcessor):
         Returns:
             HandledProcessorResponse
         """
-        order_id = response.get('orderRefNumber')
+        order_id = response.get('orderRefNum')
         logger.info('\n\n\n{}\n\n\n'.format(response))
 
         response_statuses = {
