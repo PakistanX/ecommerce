@@ -97,10 +97,9 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
         basket = self._get_basket(payment_id)
         response = Response(HTTP_200_OK)
 
-        self._send_email(basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
-
-        if request.META.get('HTTP_HOST') != self.payment_processor.configuration['domain']:
-            return Response(HTTP_403_FORBIDDEN)
+        # TODO: Write authentication logic here
+        # if request.META.get('HTTP_HOST') != self.payment_processor.configuration['domain']:
+        #     return Response(HTTP_403_FORBIDDEN)
 
         if not basket:
             logger.error('Basket not found for {}'.format(postex_response))
