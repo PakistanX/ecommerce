@@ -24,7 +24,7 @@ define([
             },
 
             onFail: function() {
-                var message = gettext('Problem occurred during checkout. Please contact support.');
+                var message = gettext('Problem occurred during checkout. Please contact support or try going to cart again from about page..');
                 $('#messages').html(_s.sprintf('<div class="alert alert-error">%s</div>', message));
             },
 
@@ -337,7 +337,8 @@ define([
 
             onReady: function() {
                 var $paymentButtons = $('.payment-buttons'),
-                    basketId = $paymentButtons.data('basket-id');
+                    basketId = $paymentButtons.data('basket-id'),
+                    lineReference = $('#line-reference').text();
 
                 Utils.toogleMobileMenuClickEvent();
 
@@ -522,7 +523,8 @@ define([
                         discountJwt = $btn.closest('#paymentForm').find('input[name="discount_jwt"]'),
                         data = {
                             basket_id: basketId,
-                            payment_processor: paymentProcessor
+                            payment_processor: paymentProcessor,
+                            line_reference: lineReference
                         };
 
                     if (discountJwt.length === 1) {

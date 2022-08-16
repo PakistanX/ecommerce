@@ -26,6 +26,7 @@ class CheckoutView(APIView):
     def post(self, request):
         basket_id = request.data['basket_id']
         payment_processor_name = request.data['payment_processor']
+        line_reference = request.data['line_reference']
 
         logger.info(
             'Checkout view called for basket [%s].',
@@ -40,6 +41,10 @@ class CheckoutView(APIView):
             basket = request.user.baskets.get(id=basket_id)
         except ObjectDoesNotExist:
             return HttpResponseBadRequest('Basket [{}] not found.'.format(basket_id))
+
+        if basket.all_lines()[0].line_reference != line_reference:
+            logger.info('Outdated basket {} with line reference {}'.format(basket_id, line_reference))
+            return HttpResponseBadRequest('Cart page seems to be outdated, go the cart page again from the about page.')
 
         # Freeze the basket so that it cannot be modified
         basket.strategy = request.strategy
