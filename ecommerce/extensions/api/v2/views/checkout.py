@@ -4,7 +4,7 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseBadRequest
-from oscar.core.loading import get_class
+from oscar.core.loading import get_class, get_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +14,7 @@ from ecommerce.extensions.payment.exceptions import ProcessorNotFoundError
 from ecommerce.extensions.payment.helpers import get_processor_class_by_name
 
 Applicator = get_class('offer.applicator', 'Applicator')
+Basket = get_model('basket', 'Basket')
 logger = logging.getLogger(__name__)
 
 
@@ -43,8 +44,14 @@ class CheckoutView(APIView):
             return HttpResponseBadRequest('Basket [{}] not found.'.format(basket_id))
 
         if basket.all_lines()[0].line_reference != line_reference:
-            logger.info('Outdated basket {} with line reference {}'.format(basket_id, line_reference))
-            return HttpResponseBadRequest('Cart page seems to be outdated, go the cart page again from the about page.')
+            message = 'Outdated basket {} with line reference {}'.format(basket_id, line_reference)
+            logger.info(message)
+            return HttpResponseBadRequest(message)
+
+        if basket.status == Basket.SUBMITTED:
+            message = 'Order already fulfilled for basket {}.'.format(basket_id)
+            logger.info(message)
+            return HttpResponseBadRequest(message)
 
         # Freeze the basket so that it cannot be modified
         basket.strategy = request.strategy
