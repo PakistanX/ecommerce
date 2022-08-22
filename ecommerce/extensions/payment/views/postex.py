@@ -74,10 +74,10 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
             transaction_id=self.processor_message.format(payment_id),
         )
 
-        basket = self._get_basket(payment_id)
-
-        if request.META.get('HTTP_X_FORWARDED_FOR') != self.payment_processor.configuration['domain']:
+        if not self.is_verified_ip_address(request):
             return self.forbidden_response
+
+        basket = self._get_basket(payment_id)
 
         if not basket:
             logger.error('Basket not found for {}'.format(postex_response))
@@ -91,6 +91,10 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
     authentication_classes = ()
     processor_message = 'PostEx IPN for {}'
+
+    def is_verified_ip_address(self, request):
+        """Check if the IP address of client matches PostEx."""
+        return request.META.get('HTTP_X_FORWARDED_FOR') == self.payment_processor.configuration['domain']
 
     @property
     def error_response(self):
@@ -158,6 +162,10 @@ class PostExPostBackView(PostExPaymentResponse, View):
 
     processor_message = 'PostEx Redirection for {}'
 
+    def is_verified_ip_address(self, request):
+        """We do not need to identify IP address for views."""
+        return True
+
     @property
     def error_response(self):
         """Error page redirection."""
@@ -166,7 +174,7 @@ class PostExPostBackView(PostExPaymentResponse, View):
     @property
     def forbidden_response(self):
         """Forbidden page redirection."""
-        return Response(status=403)
+        return self.error_response
 
     def process_payment(self, basket, request, postex_response):
         """Process payment redirect user to success or error page."""
