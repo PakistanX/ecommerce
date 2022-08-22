@@ -28,6 +28,10 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
     def payment_processor(self):
         return PostEx(self.request.site)
 
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, request, *args, **kwargs):
+        return super(PostExPaymentResponse, self).dispatch(request, *args, **kwargs)
+
     def _get_basket(self, payment_id):
         """
         Retrieve a basket using a payment ID.
@@ -88,7 +92,7 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
             logger.error('Basket not found for {}'.format(postex_response))
             return self.error_response
 
-        self.process_payment(basket, request, postex_response)
+        return self.process_payment(basket, request, postex_response)
 
 
 class PostExPostBackAPI(PostExPaymentResponse, APIView):
@@ -96,10 +100,6 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
     authentication_classes = ()
     processor_message = 'PostEx IPN for {}'
-
-    # @method_decorator(transaction.non_atomic_requests)
-    # def dispatch(self, request, *args, **kwargs):
-    #     return super(PostExPostBackAPI, self).dispatch(request, *args, **kwargs)
 
     def is_verified_ip_address(self, request):
         """Check if the IP address of client matches PostEx."""
@@ -170,10 +170,6 @@ class PostExPostBackView(PostExPaymentResponse, View):
     """Receipt redirection."""
 
     processor_message = 'PostEx Redirection for {}'
-
-    @method_decorator(transaction.non_atomic_requests)
-    def dispatch(self, request, *args, **kwargs):
-        return super(PostExPostBackView, self).dispatch(request, *args, **kwargs)
 
     def is_verified_ip_address(self, request):
         """We do not need to identify IP address for views."""
