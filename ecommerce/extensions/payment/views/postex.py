@@ -59,7 +59,7 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
             logger.exception(u"Unexpected error during basket retrieval while executing PostEx payment.")
             return None
 
-    def start_processing_payment(self, postex_response, request):
+    def start_processing_payment(self, request, postex_response):
         """Handle an incoming user returned to us by PostEx after approving payment."""
         logger.info('PostEx postBack response{}'.format(postex_response))
         payment_id = postex_response.get('orderRefNum')
