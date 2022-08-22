@@ -48,7 +48,7 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
         except MultipleObjectsReturned:
             logger.warning(u"Duplicate payment ID [%s] received from PostEx.", payment_id)
 
-            if not self.processor_message.contains('Redirection'):
+            if 'Redirection' not in self.processor_message:
                 return None
 
             logger.info('Looking into multiple baskets for view')
@@ -97,9 +97,9 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
     authentication_classes = ()
     processor_message = 'PostEx IPN for {}'
 
-    @method_decorator(transaction.non_atomic_requests)
-    def dispatch(self, request, *args, **kwargs):
-        return super(PostExPostBackAPI, self).dispatch(request, *args, **kwargs)
+    # @method_decorator(transaction.non_atomic_requests)
+    # def dispatch(self, request, *args, **kwargs):
+    #     return super(PostExPostBackAPI, self).dispatch(request, *args, **kwargs)
 
     def is_verified_ip_address(self, request):
         """Check if the IP address of client matches PostEx."""
