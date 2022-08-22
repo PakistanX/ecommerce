@@ -71,7 +71,7 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
                 'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
                 'host': request.META.get('HTTP_HOST'),
             },
-            transaction_id='PostEx for {}'.format(payment_id),
+            transaction_id=self.processor_message.format(payment_id),
         )
 
         basket = self._get_basket(payment_id)
@@ -90,6 +90,7 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
     """Handle response from PostEx API."""
 
     authentication_classes = ()
+    processor_message = 'PostEx IPN for {}'
 
     @property
     def error_response(self):
@@ -154,6 +155,8 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
 class PostExPostBackView(PostExPaymentResponse, View):
     """Receipt redirection."""
+
+    processor_message = 'PostEx Redirection for {}'
 
     @property
     def error_response(self):
