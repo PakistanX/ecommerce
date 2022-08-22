@@ -96,7 +96,11 @@ class PostEx(BasePaymentProcessor):
         logger.info('Generated data: {}'.format(data))
         query_str = urlencode(data)
         logger.info('Generated str: {}'.format(query_str))
-        entry = self.record_processor_response(data, transaction_id=order_id, basket=basket)
+        self.record_processor_response({
+            'orderRefNum': order_id,
+            'amount': amount,
+            'customerName': user_name
+        }, transaction_id=order_id, basket=basket)
         logger.info("Successfully created PostEx payment [%s] for basket [%d].", order_id, basket.id)
         data['payment_page_url'] = '{}{}'.format(api_url, query_str)
         return {'payment_page_url': data['payment_page_url']}

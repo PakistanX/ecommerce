@@ -103,7 +103,7 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
 
     def is_verified_ip_address(self, request):
         """Check if the IP address of client matches PostEx."""
-        return request.META.get('HTTP_X_FORWARDED_FOR') == self.payment_processor.configuration['domain']
+        return request.META.get('HTTP_X_FORWARDED_FOR') in self.payment_processor.configuration['domains']
 
     @property
     def error_response(self):
