@@ -180,11 +180,6 @@ class PostExPostBackView(PostExPaymentResponse, View):
         """Error page redirection."""
         return redirect(self.payment_processor.error_url)
 
-    @property
-    def forbidden_response(self):
-        """Forbidden page redirection."""
-        return self.error_response
-
     def process_payment(self, basket, request, postex_response):
         """Process payment redirect user to success or error page."""
         receipt_url = get_receipt_page_url(
@@ -192,7 +187,7 @@ class PostExPostBackView(PostExPaymentResponse, View):
             site_configuration=basket.site.siteconfiguration,
             disable_back_button=True,
         )
-        return redirect(receipt_url if postex_response['status'] != '500' else self.error_response)
+        return redirect(receipt_url) if postex_response['status'] != '500' else self.error_response
 
     def get(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
