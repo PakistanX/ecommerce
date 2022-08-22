@@ -45,15 +45,24 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
                 processor_name=self.payment_processor.NAME,
                 transaction_id=payment_id
             ).basket
-            basket.strategy = strategy.Default()
-            basket_add_organization_attribute(basket, self.request.GET)
-            return basket
         except MultipleObjectsReturned:
             logger.warning(u"Duplicate payment ID [%s] received from PostEx.", payment_id)
-            return None
+
+            if not self.processor_message.contains('Redirection'):
+                return None
+
+            logger.info('Looking into multiple baskets for view')
+            basket = PaymentProcessorResponse.objects.filter(
+                processor_name=self.payment_processor.NAME,
+                transaction_id=payment_id
+            )[0].basket
         except Exception:  # pylint: disable=broad-except
             logger.exception(u"Unexpected error during basket retrieval while executing PostEx payment.")
             return None
+
+        basket.strategy = strategy.Default()
+        basket_add_organization_attribute(basket, self.request.GET)
+        return basket
 
     def start_processing_payment(self, request, postex_response):
         """Handle an incoming user returned to us by PostEx after approving payment."""
