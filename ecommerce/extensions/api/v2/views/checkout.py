@@ -15,6 +15,7 @@ from ecommerce.extensions.payment.helpers import get_processor_class_by_name
 
 Applicator = get_class('offer.applicator', 'Applicator')
 Basket = get_model('basket', 'Basket')
+PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +51,13 @@ class CheckoutView(APIView):
 
         if basket.status == Basket.SUBMITTED:
             message = 'Order already fulfilled for basket {}.'.format(basket_id)
+            logger.info(message)
+            return HttpResponseBadRequest(message)
+
+        if PaymentProcessorResponse.objects.filter(
+                transaction_id=basket.order_number, processor_name=payment_processor_name
+        ):
+            message = 'Duplicate order number found, not allowing to create another entry.'
             logger.info(message)
             return HttpResponseBadRequest(message)
 
