@@ -24,7 +24,7 @@ define([
             },
 
             onFail: function() {
-                var message = gettext('Problem occurred during checkout. Please contact support or try going to cart again from about page.');
+                var message = gettext('The problem occurred during checkout. Please contact support or go to cart again from the about page.');
                 $('#messages').html(_s.sprintf('<div class="alert alert-error">%s</div>', message));
             },
 
