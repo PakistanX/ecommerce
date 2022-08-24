@@ -122,6 +122,7 @@ pycodestyle==2.5.0        # via -r requirements/test.txt
 pycountry==17.1.8         # via -r requirements/test.txt
 pycparser==2.20           # via -r requirements/test.txt, cffi
 pycryptodomex==3.9.7      # via -r requirements/test.txt, pyjwkest
+pycryptodome==3.15.0      # via -r requirements/test.txt
 pygments==2.6.1           # via -r requirements/docs.txt, -r requirements/test.txt, diff-cover, sphinx
 pyjwkest==1.4.2           # via -r requirements/test.txt, edx-drf-extensions
 pyjwt==1.7.1              # via -r requirements/test.txt, drf-jwt, edx-auth-backends, edx-rest-api-client, social-auth-core

@@ -93,6 +93,7 @@ pyasn1==0.4.8             # via ndg-httpsclient
 pycountry==17.1.8         # via -r requirements/base.in
 pycparser==2.20           # via cffi
 pycryptodomex==3.9.7      # via pyjwkest
+pycryptodome==3.15.0      # via -r requirements/dev.txt
 pygments==2.6.1           # via -r requirements/base.in
 pyjwkest==1.4.2           # via edx-drf-extensions
 pyjwt==1.7.1              # via drf-jwt, edx-auth-backends, edx-rest-api-client, social-auth-core

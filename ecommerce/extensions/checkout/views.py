@@ -12,11 +12,12 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import RedirectView, TemplateView
+from opaque_keys.edx.keys import CourseKey
 from oscar.apps.checkout.views import *  # pylint: disable=wildcard-import, unused-wildcard-import
 from oscar.core.loading import get_class, get_model
 from requests.exceptions import ConnectionError as ReqConnectionError
 from requests.exceptions import Timeout
-from slumber.exceptions import SlumberHttpBaseException
+from slumber.exceptions import SlumberBaseException, SlumberHttpBaseException
 
 from ecommerce.core.url_utils import (
     get_lms_courseware_url,
@@ -24,6 +25,7 @@ from ecommerce.core.url_utils import (
     get_lms_explore_courses_url,
     get_lms_program_dashboard_url
 )
+from ecommerce.courses.utils import get_course_info_from_catalog
 from ecommerce.enterprise.api import fetch_enterprise_learner_data
 from ecommerce.enterprise.utils import has_enterprise_offer
 from ecommerce.extensions.checkout.exceptions import BasketNotFreeError
@@ -173,6 +175,48 @@ class ReceiptResponseView(ThankYouView):
             response.context_data['order_dashboard_url'] = learner_portal_url
         return response
 
+    def _get_course_data(self, lines):
+        """
+        Return course data from first element of list as we are restricting cart to single item.
+
+        Args:
+            lines (list): List of basket lines.
+        Returns:
+            A dictionary containing product title, course key, image URL end organisation.
+        """
+        course_data = {
+            'product_title': None,
+            'course_key': None,
+            'image_url': None,
+            'org': None
+        }
+
+        try:
+            product = lines[0].product
+        except IndexError:
+            log.error('No lines found in basket')
+            return course_data
+
+        if product.is_seat_product:
+            course_data['course_key'] = CourseKey.from_string(product.attr.course_key)
+
+        try:
+            course = get_course_info_from_catalog(self.request.site, product)
+            try:
+                course_data['image_url'] = course['image']['src']
+            except (KeyError, TypeError):
+                pass
+            course_data['product_title'] = course.get('title', '')
+            course_data['org'] = course.get('org', '')
+
+        except (ReqConnectionError, SlumberBaseException, Timeout):
+            log.exception(
+                'Failed to retrieve data from Discovery Service for course [%s].',
+                course_data['course_key'],
+            )
+
+        return course_data
+
     def get_context_data(self, **kwargs):  # pylint: disable=arguments-differ
         context = super(ReceiptResponseView, self).get_context_data(**kwargs)
         order = context[self.context_object_name]
@@ -194,6 +238,7 @@ class ReceiptResponseView(ThankYouView):
             'has_enrollment_code_product': has_enrollment_code_product,
             'disable_back_button': self.request.GET.get('disable_back_button', 0),
         })
+        context['course_data'] = self._get_course_data(order.basket.all_lines())
         return context
 
     def get_object(self):
@@ -265,36 +310,45 @@ class ReceiptResponseView(ThankYouView):
         return context
 
     def add_message_if_enterprise_user(self, request):
-        try:
-            # If enterprise feature is enabled return all the enterprise_customer associated with user.
-            learner_data = fetch_enterprise_learner_data(request.site, request.user)
-        except (ReqConnectionError, KeyError, SlumberHttpBaseException, Timeout) as exc:
-            log.info('[enterprise learner message] Exception while retrieving enterprise learner data for '
-                     'User: %s, Exception: %s', request.user, exc)
-            return None
-
-        try:
-            enterprise_customer = learner_data['results'][0]['enterprise_customer']
-        except (IndexError, KeyError):
-            # If enterprise feature is enabled and user is not associated to any enterprise
-            return None
-
-        enable_learner_portal = enterprise_customer.get('enable_learner_portal')
-        enterprise_learner_portal_slug = enterprise_customer.get('slug')
-        if enable_learner_portal and enterprise_learner_portal_slug:
-            learner_portal_url = '{scheme}://{hostname}/{slug}'.format(
-                scheme=request.scheme,
-                hostname=settings.ENTERPRISE_LEARNER_PORTAL_HOSTNAME,
-                slug=enterprise_learner_portal_slug,
-            )
-            message = (
-                'Your company, {enterprise_customer_name}, has a dedicated page where '
-                'you can see all of your sponsored courses. '
-                'Go to <a href="{url}">your learner portal</a>.'
-            ).format(
-                enterprise_customer_name=enterprise_customer['name'],
-                url=learner_portal_url
-            )
-            messages.add_message(request, messages.INFO, message, extra_tags='safe')
-            return learner_portal_url
+        # TODO: Uncomment this code if we ever need enterprise support
+        # try:
+        #     # If enterprise feature is enabled return all the enterprise_customer associated with user.
+        #     learner_data = fetch_enterprise_learner_data(request.site, request.user)
+        # except (ReqConnectionError, KeyError, SlumberHttpBaseException, Timeout) as exc:
+        #     log.info('[enterprise learner message] Exception while retrieving enterprise learner data for '
+        #              'User: %s, Exception: %s', request.user, exc)
+        #     return None
+        #
+        # try:
+        #     enterprise_customer = learner_data['results'][0]['enterprise_customer']
+        # except (IndexError, KeyError):
+        #     # If enterprise feature is enabled and user is not associated to any enterprise
+        #     return None
+        #
+        # enable_learner_portal = enterprise_customer.get('enable_learner_portal')
+        # enterprise_learner_portal_slug = enterprise_customer.get('slug')
+        # if enable_learner_portal and enterprise_learner_portal_slug:
+        #     learner_portal_url = '{scheme}://{hostname}/{slug}'.format(
+        #         scheme=request.scheme,
+        #         hostname=settings.ENTERPRISE_LEARNER_PORTAL_HOSTNAME,
+        #         slug=enterprise_learner_portal_slug,
+        #     )
+        #     message = (
+        #         'Your company, {enterprise_customer_name}, has a dedicated page where '
+        #         'you can see all of your sponsored courses. '
+        #         'Go to <a href="{url}">your learner portal</a>.'
+        #     ).format(
+        #         enterprise_customer_name=enterprise_customer['name'],
+        #         url=learner_portal_url
+        #     )
+        #     messages.add_message(request, messages.INFO, message, extra_tags='safe')
+        #     return learner_portal_url
         return None
+
+
+class DefaultView(TemplateView):
+    """Default view for pages that are not yet implemented."""
+
+    def get(self, request, *args, **kwargs):
+        """Raise 404 for pages not yet implemented."""
+        raise Http404
