@@ -40,10 +40,6 @@ STRIPE_URLS = [
 ]
 
 
-def trigger_error(request):
-    division_by_zero = 1 / 0
-
-
 urlpatterns = [
     url(r'^cybersource/', include((CYBERSOURCE_URLS, 'cybersource'))),
     url(r'^error/$', PaymentFailedView.as_view(), name='payment_error'),
@@ -52,5 +48,4 @@ urlpatterns = [
     url(r'^stripe/', include((STRIPE_URLS, 'stripe'))),
     url(r'^easypaisa/', include((EASYPAISA_URLS, 'easypaisa'))),
     url(r'^postex/', include((POSTEX_URLS, 'postex'))),
-    url(r'^sentry-debug/', trigger_error)
 ]
