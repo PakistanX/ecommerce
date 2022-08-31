@@ -26,3 +26,4 @@ python-memcached==1.58      # required by collectstatic in devstack
 responses
 selenium
 testfixtures                # Provides a LogCapture utility used by several tests
+sentry-sdk==1.3.1
