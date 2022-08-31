@@ -39,7 +39,6 @@ STRIPE_URLS = [
     url(r'^submit/$', stripe.StripeSubmitView.as_view(), name='submit'),
 ]
 
-
 urlpatterns = [
     url(r'^cybersource/', include((CYBERSOURCE_URLS, 'cybersource'))),
     url(r'^error/$', PaymentFailedView.as_view(), name='payment_error'),
