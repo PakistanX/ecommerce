@@ -151,6 +151,7 @@ rules==2.2                # via -r requirements/base.txt
 sailthru-client==2.2.3    # via -r requirements/base.txt
 selenium==3.141.0         # via -r requirements/e2e.txt, -r requirements/test.in, bok-choy, pytest-selenium
 semantic-version==2.8.4   # via -r requirements/base.txt, edx-drf-extensions
+sentry-sdk==1.3.1         # via -r requirements/base.in
 simplejson==3.17.0        # via -r requirements/base.txt, django-rest-swagger, sailthru-client
 six==1.14.0               # via -r requirements/base.txt, -r requirements/e2e.txt, -r requirements/tox.txt, analytics-python, astroid, bleach, bok-choy, cryptography, diff-cover, django-compressor, django-extensions, django-extra-views, django-simple-history, django-waffle, djangorestframework-csv, edx-auth-backends, edx-django-release-util, edx-drf-extensions, edx-i18n-tools, edx-opaque-keys, edx-rbac, freezegun, httpretty, isodate, libsass, mock, packaging, pathlib2, paypalrestsdk, purl, pyjwkest, pyopenssl, python-dateutil, python-memcached, responses, social-auth-app-django, social-auth-core, stevedore, tox, webtest, zeep
 slumber==0.7.1            # via -r requirements/base.txt, -r requirements/e2e.txt, edx-rest-api-client
