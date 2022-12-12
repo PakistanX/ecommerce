@@ -152,19 +152,20 @@ def catalog_contains_course_runs(site, course_run_ids, enterprise_customer_uuid,
 
 
 def get_enterprise_id_for_user(site, user):
-    enterprise_from_jwt = get_enterprise_id_for_current_request_user_from_jwt()
-    if enterprise_from_jwt:
-        return enterprise_from_jwt
-
-    try:
-        enterprise_learner_response = fetch_enterprise_learner_data(site, user)
-    except (AttributeError, ReqConnectionError, KeyError, SlumberHttpBaseException, Timeout) as exc:
-        logger.info('Unable to retrieve enterprise learner data for User: %s, Exception: %s', user, exc)
-        return None
-
-    try:
-        return enterprise_learner_response['results'][0]['enterprise_customer']['uuid']
-    except IndexError:
-        pass
+    # TODO: Uncomment this code for enterprise support
+    # enterprise_from_jwt = get_enterprise_id_for_current_request_user_from_jwt()
+    # if enterprise_from_jwt:
+    #     return enterprise_from_jwt
+    #
+    # try:
+    #     enterprise_learner_response = fetch_enterprise_learner_data(site, user)
+    # except (AttributeError, ReqConnectionError, KeyError, SlumberHttpBaseException, Timeout) as exc:
+    #     logger.info('Unable to retrieve enterprise learner data for User: %s, Exception: %s', user, exc)
+    #     return None
+    #
+    # try:
+    #     return enterprise_learner_response['results'][0]['enterprise_customer']['uuid']
+    # except IndexError:
+    #     pass
 
     return None

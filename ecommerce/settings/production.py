@@ -57,6 +57,7 @@ LOGGING_SUBSECTION_OVERRIDES = {}
 CONFIG_FILE = get_env_setting('ECOMMERCE_CFG')
 with codecs.open(CONFIG_FILE, encoding='utf-8') as f:
     config_from_yaml = yaml.load(f)
+    SENTRY_DSN = config_from_yaml.get('SENTRY_DSN', None)
 
     # Remove the items that should be used to update dicts, and apply them separately rather
     # than pumping them into the local vars.
@@ -107,6 +108,18 @@ for __, configs in six.iteritems(PAYMENT_PROCESSOR_CONFIG):
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
         })
 # END PAYMENT PROCESSOR OVERRIDES
+
+####################################### SENTRY ###########################################
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=True
+    )
 
 ENTERPRISE_API_URL = urljoin(ENTERPRISE_SERVICE_URL, 'api/v1/')
 

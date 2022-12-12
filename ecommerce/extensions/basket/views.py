@@ -442,7 +442,7 @@ class BasketAddItemsView(BasketLogicMixin, APIView):
             try:
                 basket = prepare_basket(request, available_products, voucher)
             except AlreadyPlacedOrderException:
-                return render(request, 'edx/error.html', {'error': _('You have already purchased these products')})
+                return render(request, 'edx/error.html', {'error': _('You have already purchased this product')})
 
             self._set_email_preference_on_basket(request, basket)
 
@@ -614,6 +614,7 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
                     label_suffix=''
                 ),
                 'paypal_enabled': 'paypal' in (p.NAME for p in payment_processors),
+                'easypaisa_enabled': 'easypaisa' in (p.NAME for p in payment_processors),
                 # Assumption is that the credit card duration is 15 years
                 'years': list(six.moves.range(current_year, current_year + 16)),
             }

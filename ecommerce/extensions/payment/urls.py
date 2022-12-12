@@ -2,7 +2,9 @@ from __future__ import absolute_import
 
 from django.conf.urls import include, url
 
-from ecommerce.extensions.payment.views import PaymentFailedView, SDNFailure, cybersource, paypal, stripe, easypaisa
+from ecommerce.extensions.payment.views import (
+    PaymentFailedView, SDNFailure, cybersource, easypaisa, paypal, stripe, postex
+)
 
 CYBERSOURCE_APPLE_PAY_URLS = [
     url(r'^authorize/$', cybersource.CybersourceApplePayAuthorizationView.as_view(), name='authorize'),
@@ -21,8 +23,12 @@ PAYPAL_URLS = [
 ]
 
 EASYPAISA_URLS = [
-    url(r'^login/$', easypaisa.LoginToEasyPaisaView.as_view(), name='easypaisa-login'),
-    url(r'^profiles/$', paypal.PaypalProfileAdminView.as_view(), name='profiles'),
+    url(r'^postback/$', easypaisa.EasyPaisaPostBackView.as_view(), name='postback'),
+]
+
+POSTEX_URLS = [
+    url(r'^postback/$', postex.PostExPostBackAPI.as_view(), name='postback'),
+    url(r'^redirect/$', postex.PostExPostBackView.as_view(), name='redirect'),
 ]
 
 SDN_URLS = [
@@ -40,4 +46,5 @@ urlpatterns = [
     url(r'^sdn/', include((SDN_URLS, 'sdn'))),
     url(r'^stripe/', include((STRIPE_URLS, 'stripe'))),
     url(r'^easypaisa/', include((EASYPAISA_URLS, 'easypaisa'))),
+    url(r'^postex/', include((POSTEX_URLS, 'postex'))),
 ]

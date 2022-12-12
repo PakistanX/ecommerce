@@ -12,5 +12,6 @@ def core(request):
         'lms_dashboard_url': get_lms_dashboard_url(),
         'platform_name': site.name,
         'support_url': site_configuration.payment_support_url,
+        'support_email': site_configuration.payment_support_email,
         'optimizely_snippet_src': site_configuration.optimizely_snippet_src,
     }

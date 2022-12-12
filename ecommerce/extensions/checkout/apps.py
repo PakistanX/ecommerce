@@ -19,6 +19,7 @@ class CheckoutConfig(apps.CheckoutConfig):
         self.cancel_checkout = get_class('checkout.views', 'CancelCheckoutView')
         self.checkout_error = get_class('checkout.views', 'CheckoutErrorView')
         self.receipt_response = get_class('checkout.views', 'ReceiptResponseView')
+        self.default_view = get_class('checkout.views', 'DefaultView')
 
     def get_urls(self):
         urls = [
@@ -27,27 +28,29 @@ class CheckoutConfig(apps.CheckoutConfig):
             url(r'^error/', self.checkout_error.as_view(), name='error'),
             url(r'^receipt/', self.receipt_response.as_view(), name='receipt'),
 
-            url(r'^$', self.index_view.as_view(), name='index'),
+            url(r'^$', self.default_view.as_view(), name='index'),
+
+            # Uncomment this when we need these, for now these are not implemented.
 
             # Shipping/user address views
-            url(r'shipping-address/$',
-                self.shipping_address_view.as_view(), name='shipping-address'),
-            url(r'user-address/edit/(?P<pk>\d+)/$',
-                self.user_address_update_view.as_view(),
-                name='user-address-update'),
-            url(r'user-address/delete/(?P<pk>\d+)/$',
-                self.user_address_delete_view.as_view(),
-                name='user-address-delete'),
+            # url(r'shipping-address/$',
+            #     self.shipping_address_view.as_view(), name='shipping-address'),
+            # url(r'user-address/edit/(?P<pk>\d+)/$',
+            #     self.user_address_update_view.as_view(),
+            #     name='user-address-update'),
+            # url(r'user-address/delete/(?P<pk>\d+)/$',
+            #     self.user_address_delete_view.as_view(),
+            #     name='user-address-delete'),
 
             # Shipping method views
-            url(r'shipping-method/$',
-                self.shipping_method_view.as_view(), name='shipping-method'),
+            # url(r'shipping-method/$',
+            #     self.shipping_method_view.as_view(), name='shipping-method'),
 
             # Payment views
-            url(r'payment-method/$',
-                self.payment_method_view.as_view(), name='payment-method'),
-            url(r'payment-details/$',
-                self.payment_details_view.as_view(), name='payment-details'),
+            # url(r'payment-method/$',
+            #     self.payment_method_view.as_view(), name='payment-method'),
+            # url(r'payment-details/$',
+            #     self.payment_details_view.as_view(), name='payment-details'),
 
             # Preview
             url(r'preview/$',

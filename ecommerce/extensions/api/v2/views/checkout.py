@@ -4,7 +4,7 @@ import logging
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseBadRequest
-from oscar.core.loading import get_class
+from oscar.core.loading import get_class, get_model
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +14,8 @@ from ecommerce.extensions.payment.exceptions import ProcessorNotFoundError
 from ecommerce.extensions.payment.helpers import get_processor_class_by_name
 
 Applicator = get_class('offer.applicator', 'Applicator')
+Basket = get_model('basket', 'Basket')
+PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
 logger = logging.getLogger(__name__)
 
 
@@ -26,6 +28,7 @@ class CheckoutView(APIView):
     def post(self, request):
         basket_id = request.data['basket_id']
         payment_processor_name = request.data['payment_processor']
+        line_reference = request.data['line_reference']
 
         logger.info(
             'Checkout view called for basket [%s].',
@@ -40,6 +43,23 @@ class CheckoutView(APIView):
             basket = request.user.baskets.get(id=basket_id)
         except ObjectDoesNotExist:
             return HttpResponseBadRequest('Basket [{}] not found.'.format(basket_id))
+
+        if basket.all_lines()[0].line_reference != line_reference:
+            message = 'Outdated basket {} with line reference {}'.format(basket_id, line_reference)
+            logger.info(message)
+            return HttpResponseBadRequest(message)
+
+        if basket.status == Basket.SUBMITTED:
+            message = 'Order already fulfilled for basket {}.'.format(basket_id)
+            logger.info(message)
+            return HttpResponseBadRequest(message)
+
+        if PaymentProcessorResponse.objects.filter(
+                transaction_id=basket.order_number, processor_name=payment_processor_name
+        ):
+            message = 'Duplicate order number found, not allowing to create another entry.'
+            logger.info(message)
+            return HttpResponseBadRequest(message)
 
         # Freeze the basket so that it cannot be modified
         basket.strategy = request.strategy

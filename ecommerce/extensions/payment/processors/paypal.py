@@ -156,7 +156,7 @@ class Paypal(BasePaymentProcessor):
             'transactions': [{
                 'amount': {
                     'total': six.text_type(basket.total_incl_tax),
-                    'currency': basket.currency,
+                    'currency': 'USD',
                 },
                 # Paypal allows us to send additional transaction related data in 'description' & 'custom' field
                 # Free form field, max length 127 characters
@@ -173,7 +173,7 @@ class Paypal(BasePaymentProcessor):
                             # PayPal requires that the sum of all the item prices (where price = price * quantity)
                             # equals to the total amount set in amount['total'].
                             'price': six.text_type(line.line_price_incl_tax_incl_discounts / line.quantity),
-                            'currency': line.stockrecord.price_currency,
+                            'currency': 'USD',
                         }
                         for line in basket.all_lines()
                     ],
@@ -339,7 +339,7 @@ class Paypal(BasePaymentProcessor):
         return HandledProcessorResponse(
             transaction_id=transaction_id,
             total=total,
-            currency=currency,
+            currency='USD',
             card_number=label,
             card_type=None
         )
