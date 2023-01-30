@@ -135,7 +135,7 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
                 try:
                     self.handle_payment(postex_response, basket)
                 except PaymentError:
-                    logger.error('Payment error in processing {}'.format(postex_response))
+                    logger.info('Payment error in processing {}'.format(postex_response))
                     return self.error_response
         except:  # pylint: disable=bare-except
             logger.exception('Attempts to handle payment for basket [%d] failed.', basket.id)
