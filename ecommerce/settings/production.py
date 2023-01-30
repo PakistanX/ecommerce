@@ -119,6 +119,7 @@ if SENTRY_DSN:
     def before_send(event, hint):
         if 'exc_info' in hint:
             exc_type, exc_value, tb = hint['exc_info']
+            print('\n\n\n\n\n{}\n\n\n\n\n\n'.format(exc_value))
             if isinstance(exc_value, (PaymentError, GatewayError)):
                 return None
         return event
