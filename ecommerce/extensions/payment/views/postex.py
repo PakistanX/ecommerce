@@ -192,4 +192,5 @@ class PostExPostBackView(PostExPaymentResponse, View):
     def get(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
         logger.info('PostEx postBack redirection')
+        raise PaymentError
         return self.start_processing_payment(request, request.GET.dict())
