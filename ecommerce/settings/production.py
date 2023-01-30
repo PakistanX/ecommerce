@@ -111,7 +111,7 @@ for __, configs in six.iteritems(PAYMENT_PROCESSOR_CONFIG):
 
 ####################################### SENTRY ###########################################
 if SENTRY_DSN:
-    from oscar.apps.payment.exceptions import PaymentError
+    from oscar.apps.payment.exceptions import PaymentError, GatewayError
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -119,7 +119,7 @@ if SENTRY_DSN:
     def before_send(event, hint):
         if 'exc_info' in hint:
             exc_type, exc_value, tb = hint['exc_info']
-            if isinstance(exc_value, PaymentError):
+            if isinstance(exc_value, (PaymentError, GatewayError)):
                 return None
         return event
 
