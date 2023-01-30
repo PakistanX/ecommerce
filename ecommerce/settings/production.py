@@ -111,14 +111,24 @@ for __, configs in six.iteritems(PAYMENT_PROCESSOR_CONFIG):
 
 ####################################### SENTRY ###########################################
 if SENTRY_DSN:
+    from oscar.apps.payment.exceptions import PaymentError
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
+
+
+    def before_send(event, hint):
+        if 'exc_info' in hint:
+            exc_type, exc_value, tb = hint['exc_info']
+            if isinstance(exc_value, PaymentError):
+                return None
+        return event
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration()],
         traces_sample_rate=1.0,
-        send_default_pii=True
+        send_default_pii=True,
+        before_send=before_send
     )
 
 ENTERPRISE_API_URL = urljoin(ENTERPRISE_SERVICE_URL, 'api/v1/')
