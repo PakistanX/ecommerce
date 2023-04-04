@@ -340,9 +340,6 @@ class SiteConfiguration(models.Model):
         Returns:
             str
         """
-        # if settings.DEBUG:
-        #     return urljoin('http://edx.devstack-pakx-juniper.master.lms:18000', path)
-        # else:
         return urljoin(self.lms_url_root, path)
 
     def build_enterprise_service_url(self, path=''):
