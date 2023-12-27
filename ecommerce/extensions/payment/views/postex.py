@@ -16,6 +16,7 @@ from ecommerce.extensions.basket.utils import basket_add_organization_attribute
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.processors.postex import PostEx
+from ecommerce.extensions.payment.tasks import trigger_active_campaign_event
 
 logger = logging.getLogger(__name__)
 PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
@@ -68,6 +69,13 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
         basket_add_organization_attribute(basket, self.request.GET)
         return basket
 
+    def send_error_response(self, basket):
+        if basket:
+            trigger_active_campaign_event.delay(
+                'payment_unsuccessful_view', basket.owner.email, basket.all_lines()[0].product.course.id
+            )
+        return self.error_response
+
     def start_processing_payment(self, request, postex_response):
         """Handle an incoming user returned to us by PostEx after approving payment."""
         logger.info('PostEx postBack response{}'.format(postex_response))
@@ -90,7 +98,7 @@ class PostExPaymentResponse(EdxOrderPlacementMixin):
 
         if not basket:
             logger.error('Basket not found for {}'.format(postex_response))
-            return self.error_response
+            return self.send_error_response(basket)
 
         return self.process_payment(basket, request, postex_response)
 
@@ -136,23 +144,29 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
                     self.handle_payment(postex_response, basket)
                 except PaymentError:
                     logger.info('Payment error in processing {}'.format(postex_response))
-                    return self.error_response
+                    return self.send_error_response(basket)
         except:  # pylint: disable=bare-except
             logger.exception('Attempts to handle payment for basket [%d] failed.', basket.id)
-            return self.error_response
+            return self.send_error_response(basket)
 
         try:
             order = self.create_order(request, basket)
         except Exception:  # pylint: disable=broad-except
             logger.warning('Exception in create order for {}'.format(postex_response))
-            return self.error_response
+            return self.send_error_response(basket)
 
         try:
             self.handle_post_order(order)
         except Exception:  # pylint: disable=broad-except
+            trigger_active_campaign_event.delay(
+                'payment_unsuccessful_view', basket.owner.email, basket.all_lines()[0].product.course.id
+            )
             self.log_order_placement_exception(basket.order_number, basket.id)
 
         self._send_email(basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
+        trigger_active_campaign_event.delay(
+            'payment_successful_view', basket.owner.email, basket.all_lines()[0].product.course.id
+        )
         return self.error_response
 
     def get(self, request):
@@ -187,7 +201,7 @@ class PostExPostBackView(PostExPaymentResponse, View):
             site_configuration=basket.site.siteconfiguration,
             disable_back_button=True,
         )
-        return redirect(receipt_url) if postex_response['status'] != '500' else self.error_response
+        return redirect(receipt_url) if postex_response['status'] != '500' else self.send_error_response(basket)
 
     def get(self, request):
         """Handle an incoming user returned to us by PostEx after approving payment."""
