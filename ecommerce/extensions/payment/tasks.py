@@ -14,6 +14,9 @@ log = getLogger(__name__)
 @task(name='trigger_active_campaign_event')
 def trigger_active_campaign_event(event_name, email, course_key=None):
     """Trigger active campaign event."""
+    if not settings.AC_ACCOUNT_ID:
+        return
+
     event_data = {'email': email}
     if course_key:
         course = Course.objects.get(id=course_key)
