@@ -3,6 +3,7 @@
 import json
 from logging import getLogger
 
+import requests
 from celery import task
 from django.conf import settings
 
