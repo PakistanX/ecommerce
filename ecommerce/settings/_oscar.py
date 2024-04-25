@@ -137,6 +137,7 @@ PAYMENT_PROCESSORS = (
     'ecommerce.extensions.payment.processors.stripe.Stripe',
     'ecommerce.extensions.payment.processors.easypaisa.EasyPaisa',
     'ecommerce.extensions.payment.processors.postex.PostEx',
+    'ecommerce.extensions.payment.processors.xstack.XStack',
 )
 
 PAYMENT_PROCESSOR_RECEIPT_PATH = '/checkout/receipt/'
@@ -164,6 +165,13 @@ PAYMENT_PROCESSOR_CONFIG = {
             'client_secret': None,
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
+        },
+        'xstack': {
+            'public_key': None,
+            'hmac_secret': None,
+            'account_id': None,
+            'secret_key': None,
+            'payment_intent_url': None
         },
         'stripe': {
             'publishable_key': None,

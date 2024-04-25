@@ -356,12 +356,31 @@ define([
                         break;
                     }
                 });
-
+                $('#billing-info').on('submit', function (e) {
+                    e.preventDefault();
+                    const values = $(this).serializeArray();
+                    $('#contact-review').html(values.find((v)=>v.name==='phone_number').value);
+                    $('#address-review').html(values.find((v)=>v.name==='street_address').value);
+                    $('#address-form').hide();
+                    $('#review-form').show();
+                    $(window).scrollTop(0);
+                });
+                $('.edit-form').on('click', function (e) {
+                    e.preventDefault();
+                    $(window).scrollTop(0);
+                    $('#address-form').show();
+                    $('#review-form').hide();
+                });
+                $('#submit-review').on('click', function (e) {
+                    e.preventDefault();
+                    $(window).scrollTop(0);
+                    $('#review-form').hide();
+                    $('#card-form').show();
+                });
                 $('#card-cvn-help').on('click touchstart', function(event) {
                     event.preventDefault();
                     BasketPage.toggleCvvTooltip();
                 });
-
                 $('#card-cvn-help').blur(BasketPage.hideCvvTooltip)
                     .hover(BasketPage.showCvvTooltip, BasketPage.hideCvvTooltip);
 

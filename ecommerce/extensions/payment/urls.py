@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from django.conf.urls import include, url
 
 from ecommerce.extensions.payment.views import (
-    PaymentFailedView, SDNFailure, cybersource, easypaisa, paypal, stripe, postex
+    PaymentFailedView, SDNFailure, cybersource, easypaisa, paypal, stripe, postex, xstack
 )
 
 CYBERSOURCE_APPLE_PAY_URLS = [
@@ -31,6 +31,10 @@ POSTEX_URLS = [
     url(r'^redirect/$', postex.PostExPostBackView.as_view(), name='redirect'),
 ]
 
+XSTACK_URLS = [
+    url(r'^xstack/$', xstack.XStackPostBackView.as_view(), name='xstack_payment_intent'),
+]
+
 SDN_URLS = [
     url(r'^failure/$', SDNFailure.as_view(), name='failure'),
 ]
@@ -47,4 +51,5 @@ urlpatterns = [
     url(r'^stripe/', include((STRIPE_URLS, 'stripe'))),
     url(r'^easypaisa/', include((EASYPAISA_URLS, 'easypaisa'))),
     url(r'^postex/', include((POSTEX_URLS, 'postex'))),
+    url(r'^xstack/', include((XSTACK_URLS, 'xstack'))),
 ]
