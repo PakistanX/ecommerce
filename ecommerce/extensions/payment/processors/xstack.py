@@ -11,7 +11,7 @@ from ecommerce.extensions.payment.processors import BasePaymentProcessor, Handle
 
 logger = logging.getLogger(__name__)
 
-
+#TODO: Fix logs
 class XStack(BasePaymentProcessor):
     """XStack API implementation."""
 

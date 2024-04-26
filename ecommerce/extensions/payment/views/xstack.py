@@ -91,20 +91,20 @@ class XStackPostBackView(EdxOrderPlacementMixin, APIView):
         basket_res = request.GET.dict()
         payment_id = basket_res['orderRefNum']
         payload = OrderedDict([
-            ('amount', 10),
+            ('amount', basket_res['amount']),
             ('currency', "PKR"),
             ('payment_method_types', "card"),
             ('customer', OrderedDict([
-                ('email', "hjj@hh.cc"),
-                ('name', "jjj"),
-                ('phone', "876876"),
+                ('email', data.email),
+                ('name', '{} {}'.format(data.first_name, data.last_name)),
+                ('phone', data.phone_number),
             ])),
             ('shipping', OrderedDict([
-                ('address1', "kjhkj"),
-                ('city', "kjhkj"),
-                ('country', "kjhkj"),
-                ('province', "79"),
-                ('zip', "987")
+                ('address1', '{}, {}'.format(data.street_address, data.address_line2)),
+                ('city', data.city),
+                ('country', ''),
+                ('province', ''),
+                ('zip', data.post_code)
             ])),
             ("metadata", OrderedDict([('order_reference', payment_id)]))
         ])

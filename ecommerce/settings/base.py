@@ -781,14 +781,7 @@ ECOMMERCE_PAYMENT_PROCESSOR_CONFIG = {
             'error_url': '/checkout/error/',
             'mode': 'sandbox',
             'receipt_url': '/checkout/receipt/'
-        },
-        'xstack': {
-            'public_key': None,
-            'hmac_secret': None,
-            'account_id': None,
-            'secret_key': None,
-            'payment_intent_url': None
-        },
+        }
     }
 }
 CACHES = {
