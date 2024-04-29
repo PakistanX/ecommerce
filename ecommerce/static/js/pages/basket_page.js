@@ -359,11 +359,31 @@ define([
                 $('#billing-info').on('submit', function (e) {
                     e.preventDefault();
                     const values = $(this).serializeArray();
-                    $('#contact-review').html(values.find((v)=>v.name==='phone_number').value);
-                    $('#address-review').html(values.find((v)=>v.name==='street_address').value);
-                    $('#address-form').hide();
-                    $('#review-form').show();
-                    $(window).scrollTop(0);
+                    const errs = values.map((v) => {
+                        if (!v.value) {
+                            $(`#${v.name}-err`).html('This field is required')
+                            return true;
+                        } else if (v.name === 'post_code' && !/^\d{5}(?:[-\s]\d{4})?$/.test(v.value)) {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid postal code')
+                            return true;
+                        } else if (v.name === 'phone_number' && !/^\d{11}/.test(v.value)) {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid phone number')
+                            return true;
+                        } else {
+                            $(`#${v.name}-err`).html('')
+                            return false;
+                        }
+
+                    });
+                    if (errs.find((e) => e)) {
+                        return;
+                    } else {
+                        $('#contact-review').html(values.find((v) => v.name === 'phone_number').value);
+                        $('#address-review').html(values.find((v) => v.name === 'street_address').value);
+                        $('#address-form').hide();
+                        $('#review-form').show();
+                        $(window).scrollTop(0);
+                    }
                 });
                 $('.edit-form').on('click', function (e) {
                     e.preventDefault();
