@@ -1677,5 +1677,7 @@ class XStackPostBackSerializer(serializers.Serializer):
     street_address = serializers.CharField(max_length=200)
     address_line2 = serializers.CharField(max_length=200)
     city = serializers.CharField(max_length=200)
+    country = serializers.CharField(max_length=200)
+    state = serializers.CharField(max_length=200)
     post_code = serializers.CharField(max_length=200)
     phone_number = serializers.CharField(max_length=200)

@@ -103,11 +103,11 @@ class XStackPostBackView(EdxOrderPlacementMixin, APIView):
             ('shipping', OrderedDict([
                 ('address1', '{}, {}'.format(data.data['street_address'], data.data['address_line2'])),
                 ('city', data.data['city']),
-                ('country', ''),
-                ('province', ''),
+                ('country', data.data['country']),
+                ('province', data.data['state']),
                 ('zip', data.data['post_code'])
             ])),
-            ("metadata", OrderedDict([('order_reference', payment_id)]))
+            ("metadata", OrderedDict([('order_reference', "{}-{}".format(request.user.id,payment_id))]))
         ])
 
         json_body = json.dumps(payload, separators=(',', ':')).encode('utf-8')

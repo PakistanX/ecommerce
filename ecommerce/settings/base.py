@@ -745,11 +745,6 @@ SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
 CORS_ORIGIN_WHITELIST = []
 CORS_URLS_REGEX = ''
 
-MEDIA_STORAGE_BACKEND = {
-    'DEFAULT_FILE_STORAGE': 'django.core.files.storage.FileSystemStorage',
-    'MEDIA_ROOT': MEDIA_ROOT,
-    'MEDIA_URL': MEDIA_URL
-}
 ECOMMERCE_PAYMENT_PROCESSOR_CONFIG = {
     'edx': {
         'cybersource': {
@@ -783,6 +778,11 @@ ECOMMERCE_PAYMENT_PROCESSOR_CONFIG = {
             'receipt_url': '/checkout/receipt/'
         }
     }
+}
+MEDIA_STORAGE_BACKEND = {
+    'DEFAULT_FILE_STORAGE': 'django.core.files.storage.FileSystemStorage',
+    'MEDIA_ROOT': MEDIA_ROOT,
+    'MEDIA_URL': MEDIA_URL
 }
 CACHES = {
     'default': {

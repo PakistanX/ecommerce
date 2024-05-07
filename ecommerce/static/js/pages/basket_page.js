@@ -366,8 +366,22 @@ define([
                         } else if (v.name === 'post_code' && !/^\d{5}(?:[-\s]\d{4})?$/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid postal code')
                             return true;
+                        } else if (v.name === 'city' && v.value === "Select your city") {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid city')
+                            return true;
+                        }
+                        else if (v.name === 'state' && v.value === "Select your state") {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid state')
+                            return true;
+                        }
+                        else if (v.name === 'country' && v.value === "Select your country") {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid country')
+                            return true;
                         } else if (v.name === 'phone_number' && !/^\d{11}/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid phone number')
+                            return true;
+                        } else if (v.name === 'email' && !/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(v.value)) {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid email')
                             return true;
                         } else {
                             $(`#${v.name}-err`).html('')
