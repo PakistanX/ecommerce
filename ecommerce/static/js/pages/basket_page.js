@@ -356,12 +356,65 @@ define([
                         break;
                     }
                 });
+                $('#billing-info').on('submit', function (e) {
+                    e.preventDefault();
+                    const values = $(this).serializeArray();
+                    const errs = values.map((v) => {
+                        if (!v.value) {
+                            $(`#${v.name}-err`).html('This field is required')
+                            return true;
+                        } else if (v.name === 'post_code' && !/^\d{5}(?:[-\s]\d{4})?$/.test(v.value)) {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid postal code')
+                            return true;
+                        } else if (v.name === 'city' && v.value === "Select your city") {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid city')
+                            return true;
+                        }
+                        else if (v.name === 'state' && v.value === "Select your state") {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid state')
+                            return true;
+                        }
+                        else if (v.name === 'country' && v.value === "Select your country") {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid country')
+                            return true;
+                        } else if (v.name === 'phone_number' && !/^\d{11}/.test(v.value)) {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid phone number')
+                            return true;
+                        } else if (v.name === 'email' && !/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(v.value)) {
+                            $(`#${v.name}-err`).html('This field is invalid, please use a valid email')
+                            return true;
+                        } else {
+                            $(`#${v.name}-err`).html('')
+                            return false;
+                        }
 
+                    });
+                    if (errs.find((e) => e)) {
+                        return;
+                    } else {
+                        $('#contact-review').html(values.find((v) => v.name === 'phone_number').value);
+                        $('#address-review').html(values.find((v) => v.name === 'street_address').value);
+                        $('#address-form').hide();
+                        $('#review-form').show();
+                        $(window).scrollTop(0);
+                    }
+                });
+                $('.edit-form').on('click', function (e) {
+                    e.preventDefault();
+                    $(window).scrollTop(0);
+                    $('#address-form').show();
+                    $('#review-form').hide();
+                });
+                $('#submit-review').on('click', function (e) {
+                    e.preventDefault();
+                    $(window).scrollTop(0);
+                    $('#review-form').hide();
+                    $('#card-form').show();
+                });
                 $('#card-cvn-help').on('click touchstart', function(event) {
                     event.preventDefault();
                     BasketPage.toggleCvvTooltip();
                 });
-
                 $('#card-cvn-help').blur(BasketPage.hideCvvTooltip)
                     .hover(BasketPage.showCvvTooltip, BasketPage.hideCvvTooltip);
 

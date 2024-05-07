@@ -72,6 +72,7 @@ from ecommerce.extensions.order.exceptions import AlreadyPlacedOrderException
 from ecommerce.extensions.partner.shortcuts import get_partner_for_site
 from ecommerce.extensions.payment.constants import CLIENT_SIDE_CHECKOUT_FLAG_NAME
 from ecommerce.extensions.payment.forms import PaymentForm
+from ecommerce.extensions.payment.processors.xstack import XStack
 
 Basket = get_model('basket', 'basket')
 BasketAttribute = get_model('basket', 'BasketAttribute')
@@ -583,6 +584,7 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
             'max_seat_quantity': 100,
             'payment_processors': payment_processors,
             'lms_url_root': site_configuration.lms_url_root,
+            'xstack_config': XStack(self.request.site).configuration
         })
         return context
 
