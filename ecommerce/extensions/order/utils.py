@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 Option = get_model('catalogue', 'Option')
 Order = get_model('order', 'Order')
 OrderLine = get_model('order', 'Line')
+PaymentEvent = get_model('order', 'PaymentEvent')
 RefundLine = get_model('refund', 'RefundLine')
 
 
@@ -191,6 +192,10 @@ class UserAlreadyPlacedOrder:
         orders_lines = OrderLine.objects.filter(product=product, order__user=user)
         for order_line in orders_lines:
             if not UserAlreadyPlacedOrder.is_order_line_refunded(order_line):
+                payment_event = PaymentEvent.objects.filter(order_id=order_line.order_id).first()
+                if payment_event.processor_name == 'postex_cod':
+                    return False
+
                 if not order_line.product.is_course_entitlement_product:
                     return True
 

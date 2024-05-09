@@ -137,6 +137,7 @@ PAYMENT_PROCESSORS = (
     'ecommerce.extensions.payment.processors.stripe.Stripe',
     'ecommerce.extensions.payment.processors.easypaisa.EasyPaisa',
     'ecommerce.extensions.payment.processors.postex.PostEx',
+    'ecommerce.extensions.payment.processors.postex.PostExCOD',
     'ecommerce.extensions.payment.processors.xstack.XStack',
 )
 
@@ -193,7 +194,14 @@ PAYMENT_PROCESSOR_CONFIG = {
             'url': None,
             'cancel_checkout_path': PAYMENT_PROCESSOR_CANCEL_PATH,
             'error_path': PAYMENT_PROCESSOR_ERROR_PATH,
-        }
+        },
+        'postex_cod': {
+            'key': None,
+            'pickup_address_code': None,
+            'create_order_url': None,
+            'get_cities_url': None,
+            'fixed_delivery_charges': None,
+        },
     },
 }
 

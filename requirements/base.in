@@ -2,6 +2,7 @@
 
 analytics-python
 bleach
+boto3
 coreapi
 django<3.0
 django-compressor

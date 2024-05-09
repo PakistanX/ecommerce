@@ -13,6 +13,7 @@ babel==2.8.0              # via django-oscar, django-phonenumber-field
 billiard==3.3.0.23        # via celery
 bleach==3.1.4             # via -r requirements/base.in
 boto==2.49.0              # via django-ses
+boto3==1.16.63
 cached-property==1.5.1    # via zeep
 celery==3.1.26.post2      # via edx-ecommerce-worker
 certifi==2020.4.5.1       # via requests

@@ -89,6 +89,9 @@ PAYMENT_PROCESSOR_CONFIG = {
 # Language cookie
 LANGUAGE_COOKIE_NAME = 'openedx-language-preference'
 
+AWS_ACCESS_KEY_ID = 'aws-access-key-id'
+AWS_SECRET_ACCESS_KEY = 'aws-secret-access-key'
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 #SAILTHRU settings

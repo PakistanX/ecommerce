@@ -356,6 +356,23 @@ define([
                         break;
                     }
                 });
+                $('#checkoutBtn-xstack').hide();
+                $('#checkoutBtn-postex_cod').hide();
+                $('input[name="payment"]').on('change', function() {
+                    const selectedOption = $('input[name="payment"]:checked').val();
+                    if (selectedOption) {
+                        switch (selectedOption) {
+                            case 'xstack':
+                                $('#checkoutBtn-postex_cod').hide();
+                                $('#checkoutBtn-xstack').show();
+                                break;
+                            case 'postex_cod':
+                                $('#checkoutBtn-xstack').hide();
+                                $('#checkoutBtn-postex_cod').show();
+                                break;
+                        }
+                    }
+                });
                 $('#billing-info').on('submit', function (e) {
                     e.preventDefault();
                     const values = $(this).serializeArray();
@@ -366,8 +383,9 @@ define([
                         } else if (v.name === 'post_code' && !/^\d{5}(?:[-\s]\d{4})?$/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid postal code')
                             return true;
-                        } else if (v.name === 'city' && v.value === "Select your city") {
+                        } else if (v.name === 'city' && (v.value === "Select your city" || v.value === "")) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid city')
+                            v.value = v.value.trim()
                             return true;
                         }
                         else if (v.name === 'state' && v.value === "Select your state") {
@@ -377,7 +395,7 @@ define([
                         else if (v.name === 'country' && v.value === "Select your country") {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid country')
                             return true;
-                        } else if (v.name === 'phone_number' && !/^\d{11}/.test(v.value)) {
+                        } else if (v.name === 'phone_number' && !/^\d{11}$/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid phone number')
                             return true;
                         } else if (v.name === 'email' && !/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(v.value)) {
@@ -405,12 +423,6 @@ define([
                     $('#address-form').show();
                     $('#review-form').hide();
                 });
-                $('#submit-review').on('click', function (e) {
-                    e.preventDefault();
-                    $(window).scrollTop(0);
-                    $('#review-form').hide();
-                    $('#card-form').show();
-                });
                 $('#card-cvn-help').on('click touchstart', function(event) {
                     event.preventDefault();
                     BasketPage.toggleCvvTooltip();
@@ -428,11 +440,11 @@ define([
                     BasketPage.hideVoucherForm();
                 });
 
-                $('#voucher_form').on('submit', function() {
-                    $('#apply-voucher-button').attr('disabled', true);
-                    $('#payment-button').attr('disabled', true);
-                    $('.payment-button[type=button]').attr('disabled', true);
-                });
+                // $('#voucher_form').on('submit', function() {
+                //     $('#apply-voucher-button').attr('disabled', true);
+                //     $('#payment-button').attr('disabled', true);
+                //     $('.payment-button[type=button]').attr('disabled', true);
+                // });
 
                 $('select[name=country]').on('change', function() {
                     var country = $('select[name=country]').val(),

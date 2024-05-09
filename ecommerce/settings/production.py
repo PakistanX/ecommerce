@@ -24,6 +24,10 @@ COMPRESS_OFFLINE = True
 # Email configuration
 EMAIL_BACKEND = 'django_ses.SESBackend'
 
+# AWS Configs
+AWS_ACCESS_KEY_ID = environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = environ.get('AWS_SECRET_ACCESS_KEY', '')
+
 # Minify CSS
 COMPRESS_CSS_FILTERS += [
     'compressor.filters.cssmin.CSSMinFilter',

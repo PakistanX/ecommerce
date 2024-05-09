@@ -53,7 +53,7 @@ class EdxOrderPlacementMixin(six.with_metaclass(abc.ABCMeta, OrderPlacementMixin
     order_placement_failure_msg = 'Order Failure: %s payment was received, but an order for basket [%d] ' \
                                   'could not be placed.'
 
-    def create_order(self, request, basket, billing_address=None):
+    def create_order(self, request, basket, billing_address=None, payment_processor=None):
         # Emma: this is moved from an old OrderCreationMixin class which was only in use by
         # CybersourceInterstitialView and CybersourceApplePayAuthorizationView. Not for Paypal.
         # Paypal has a different codepath for creating orders.
@@ -81,7 +81,8 @@ class EdxOrderPlacementMixin(six.with_metaclass(abc.ABCMeta, OrderPlacementMixin
                 shipping_charge=shipping_charge,
                 billing_address=billing_address,
                 order_total=order_total,
-                request=request
+                request=request,
+                payment_processor=payment_processor,
             )
 
             return order
@@ -162,6 +163,7 @@ class EdxOrderPlacementMixin(six.with_metaclass(abc.ABCMeta, OrderPlacementMixin
                                billing_address,
                                order_total,
                                request=None,
+                               payment_processor=None,
                                **kwargs):  # pylint: disable=arguments-differ
         """
         Place an order and mark the corresponding basket as submitted.
@@ -186,7 +188,8 @@ class EdxOrderPlacementMixin(six.with_metaclass(abc.ABCMeta, OrderPlacementMixin
 
             basket.submit()
 
-        return self.handle_successful_order(order, request)
+        if not payment_processor == 'postex_cod':
+            return self.handle_successful_order(order, request)
 
     def handle_successful_order(self, order, request=None):  # pylint: disable=arguments-differ
         """Send a signal so that receivers can perform relevant tasks (e.g., fulfill the order)."""
