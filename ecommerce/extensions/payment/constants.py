@@ -43,6 +43,8 @@ CYBERSOURCE_CARD_TYPE_MAP = {
 
 CLIENT_SIDE_CHECKOUT_FLAG_NAME = 'enable_client_side_checkout'
 
+CLIENT_REDIRECT_DISABLED_CHECKOUT_SWITCH = 'disable_client_redirect_checkout'
+
 # .. toggle_name: disable_microfrontend_for_basket_page
 # .. toggle_type: waffle_flag
 # .. toggle_default: False

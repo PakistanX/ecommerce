@@ -5,18 +5,19 @@ import logging
 from collections import OrderedDict
 
 import requests
+
 from django.core.exceptions import MultipleObjectsReturned
-from oscar.apps.partner import strategy
-from oscar.core.loading import get_class, get_model
-from ecommerce.extensions.api.serializers import XStackPostBackSerializer
+from ecommerce.extensions.api.serializers import PaymentPostBackSerializer
 from ecommerce.extensions.basket.utils import basket_add_organization_attribute
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.processors.xstack import XStack
-from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST,HTTP_200_OK
-from rest_framework.views import APIView
+from oscar.apps.partner import strategy
 from oscar.apps.payment.exceptions import PaymentError
+from oscar.core.loading import get_class, get_model
+from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
@@ -60,7 +61,7 @@ class XStackPostBackView(EdxOrderPlacementMixin, APIView):
                 transaction_id=payment_id
             ).basket
         except MultipleObjectsReturned:
-            logger.warning(u"Duplicate payment ID [%s] received from PostEx.", payment_id)
+            logger.warning(u"Duplicate payment ID [%s] received from xstack processor.", payment_id)
 
             if 'Redirection' not in self.processor_message:
                 return None
@@ -81,12 +82,12 @@ class XStackPostBackView(EdxOrderPlacementMixin, APIView):
     def post(self, request):
         """
         This creates a payment intent , manages order and basket status,
-        creates and reciept url that is then shown to user
+        creates receipt url that is then shown to user
         """
         secret_key = self.payment_processor.configuration['secret_key']
         hmac_secret = self.payment_processor.configuration['hmac_secret']
         account_id = self.payment_processor.configuration['account_id']
-        data = XStackPostBackSerializer(data=request.data)
+        data = PaymentPostBackSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         basket_res = request.GET.dict()
         payment_id = basket_res['orderRefNum']

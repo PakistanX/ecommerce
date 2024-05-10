@@ -18,11 +18,6 @@ define([
         'use strict';
 
         var BasketPage = {
-            hideVoucherForm: function() {
-                $('#voucher_form_container').hide();
-                $('#voucher_form_link').show();
-            },
-
             onFail: function() {
                 var message = gettext('The problem occurred during checkout. Please contact support or go to cart again from the about page.');
                 $('#messages').html(_s.sprintf('<div class="alert alert-error">%s</div>', message));
@@ -209,12 +204,6 @@ define([
                 }
             },
 
-            showVoucherForm: function() {
-                $('#voucher_form_container').show();
-                $('#voucher_form_link').hide();
-                $('#id_code').focus();
-            },
-
             showCvvTooltip: function() {
                 $('#cvvtooltip').show();
                 $('#card-cvn-help').attr({
@@ -356,6 +345,23 @@ define([
                         break;
                     }
                 });
+                $('#checkoutBtn-xstack').hide();
+                $('#checkoutBtn-postex_cod').hide();
+                $('input[name="payment"]').on('change', function() {
+                    const selectedOption = $('input[name="payment"]:checked').val();
+                    if (selectedOption) {
+                        switch (selectedOption) {
+                            case 'xstack':
+                                $('#checkoutBtn-postex_cod').hide();
+                                $('#checkoutBtn-xstack').show();
+                                break;
+                            case 'postex_cod':
+                                $('#checkoutBtn-xstack').hide();
+                                $('#checkoutBtn-postex_cod').show();
+                                break;
+                        }
+                    }
+                });
                 $('#billing-info').on('submit', function (e) {
                     e.preventDefault();
                     const values = $(this).serializeArray();
@@ -366,8 +372,9 @@ define([
                         } else if (v.name === 'post_code' && !/^\d{5}(?:[-\s]\d{4})?$/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid postal code')
                             return true;
-                        } else if (v.name === 'city' && v.value === "Select your city") {
+                        } else if (v.name === 'city' && (v.value === "Select your city" || v.value === "")) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid city')
+                            v.value = v.value.trim()
                             return true;
                         }
                         else if (v.name === 'state' && v.value === "Select your state") {
@@ -377,7 +384,7 @@ define([
                         else if (v.name === 'country' && v.value === "Select your country") {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid country')
                             return true;
-                        } else if (v.name === 'phone_number' && !/^\d{11}/.test(v.value)) {
+                        } else if (v.name === 'phone_number' && !/^\d{11}$/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid phone number')
                             return true;
                         } else if (v.name === 'email' && !/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(v.value)) {
@@ -405,28 +412,12 @@ define([
                     $('#address-form').show();
                     $('#review-form').hide();
                 });
-                $('#submit-review').on('click', function (e) {
-                    e.preventDefault();
-                    $(window).scrollTop(0);
-                    $('#review-form').hide();
-                    $('#card-form').show();
-                });
                 $('#card-cvn-help').on('click touchstart', function(event) {
                     event.preventDefault();
                     BasketPage.toggleCvvTooltip();
                 });
                 $('#card-cvn-help').blur(BasketPage.hideCvvTooltip)
                     .hover(BasketPage.showCvvTooltip, BasketPage.hideCvvTooltip);
-
-                $('#voucher_form_link').on('click', function(event) {
-                    event.preventDefault();
-                    BasketPage.showVoucherForm();
-                });
-
-                $('#voucher_form_cancel').on('click', function(event) {
-                    event.preventDefault();
-                    BasketPage.hideVoucherForm();
-                });
 
                 $('#voucher_form').on('submit', function() {
                     $('#apply-voucher-button').attr('disabled', true);

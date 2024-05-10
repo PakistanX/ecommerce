@@ -70,8 +70,9 @@ from ecommerce.extensions.offer.utils import (
 )
 from ecommerce.extensions.order.exceptions import AlreadyPlacedOrderException
 from ecommerce.extensions.partner.shortcuts import get_partner_for_site
-from ecommerce.extensions.payment.constants import CLIENT_SIDE_CHECKOUT_FLAG_NAME
+from ecommerce.extensions.payment.constants import CLIENT_SIDE_CHECKOUT_FLAG_NAME, CLIENT_REDIRECT_DISABLED_CHECKOUT_SWITCH
 from ecommerce.extensions.payment.forms import PaymentForm
+from ecommerce.extensions.payment.processors.postex import PostExCOD
 from ecommerce.extensions.payment.processors.xstack import XStack
 
 Basket = get_model('basket', 'basket')
@@ -584,7 +585,9 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
             'max_seat_quantity': 100,
             'payment_processors': payment_processors,
             'lms_url_root': site_configuration.lms_url_root,
-            'xstack_config': XStack(self.request.site).configuration
+            'xstack_config': XStack(self.request.site).configuration,
+            'cities_list': PostExCOD(self.request.site).get_cities_list,
+            'disable_client_redirect_checkout': waffle.switch_is_active(CLIENT_REDIRECT_DISABLED_CHECKOUT_SWITCH)
         })
         return context
 

@@ -239,6 +239,21 @@ class ReceiptResponseView(ThankYouView):
             'disable_back_button': self.request.GET.get('disable_back_button', 0),
         })
         context['course_data'] = self._get_course_data(order.basket.all_lines())
+        if context.get('payment_method') == 'postex_cod':
+            try:
+                from oscar.core.loading import get_model
+
+                PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
+                processor_res = PaymentProcessorResponse.objects.filter(processor_name='postex_cod', transaction_id='Postex COD payment intent for {}'.format(order.number)).first()
+                tracking_id = processor_res.response.get('payment_intent_res').get('dist').get('trackingNumber')
+                pickup_address = processor_res.response.get('pickup_address')
+                if tracking_id and pickup_address:
+                    context['tracking_id'] = tracking_id
+                    context['pickup_address'] = pickup_address
+            except Exception:  # pylint: disable=broad-except
+                log.exception(u"Unexpected error during tracking ID retrieval from Payment Processor Response.")
+                return None
+
         return context
 
     def get_object(self):

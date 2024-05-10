@@ -341,7 +341,7 @@ class SiteConfiguration(models.Model):
             str
         """
         if settings.DEBUG:
-            return urljoin('http://edx.devstack-pakx-juniper.master.lms:18000', path)
+            return urljoin('http://edx.devstack-ilmx-juniper.lms:18000', path)
         else:
             return urljoin(self.lms_url_root, path)
 

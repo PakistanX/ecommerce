@@ -15,6 +15,7 @@ babel==2.8.0              # via -r requirements/docs.txt, -r requirements/test.t
 beautifulsoup4==4.9.0     # via -r requirements/test.txt, webtest
 billiard==3.3.0.23        # via -r requirements/test.txt, celery
 bleach==3.1.4             # via -r requirements/test.txt
+boto3==1.16.63
 bok-choy==1.0.1           # via -r requirements/test.txt
 cached-property==1.5.1    # via -r requirements/test.txt, zeep
 celery==3.1.26.post2      # via -r requirements/test.txt, edx-ecommerce-worker

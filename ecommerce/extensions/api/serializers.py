@@ -1670,7 +1670,7 @@ class CouponCodeRemindSerializer(CouponCodeMixin, serializers.Serializer):  # py
             raise
 
 
-class XStackPostBackSerializer(serializers.Serializer):
+class PaymentPostBackSerializer(serializers.Serializer):
     email = serializers.EmailField()
     first_name = serializers.CharField(max_length=200)
     last_name = serializers.CharField(max_length=200)

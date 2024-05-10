@@ -29,6 +29,7 @@ EASYPAISA_URLS = [
 POSTEX_URLS = [
     url(r'^postback/$', postex.PostExPostBackAPI.as_view(), name='postback'),
     url(r'^redirect/$', postex.PostExPostBackView.as_view(), name='redirect'),
+    url(r'^cod/$', postex.PostExCODPaymentView.as_view(), name='cod'),
 ]
 
 XSTACK_URLS = [

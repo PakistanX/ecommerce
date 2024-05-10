@@ -21,9 +21,6 @@ PROTOCOL = 'https'
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
 
-# Email configuration
-EMAIL_BACKEND = 'django_ses.SESBackend'
-
 # Minify CSS
 COMPRESS_CSS_FILTERS += [
     'compressor.filters.cssmin.CSSMinFilter',
@@ -39,6 +36,21 @@ def get_env_setting(setting):
     except KeyError:
         error_msg = "Set the %s env variable" % setting
         raise ImproperlyConfigured(error_msg)
+    
+# Email configuration
+EMAIL_BACKEND = 'django_ses.SESBackend'
+
+# # AWS Configs
+# AWS_ACCESS_KEY_ID = get_env_setting('AWS_ACCESS_KEY_ID')
+# AWS_SECRET_ACCESS_KEY = get_env_setting('AWS_SECRET_ACCESS_KEY')
+# AWS_SES_REGION_NAME = get_env_setting('AWS_SES_REGION_NAME')
+
+
+# AWS Configs
+AWS_ACCESS_KEY_ID = environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = environ.get('AWS_SECRET_ACCESS_KEY', '')
+AWS_SES_REGION_NAME = environ.get('AWS_SES_REGION_NAME', '')
+
 
 
 # HOST CONFIGURATION
