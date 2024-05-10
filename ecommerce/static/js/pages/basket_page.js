@@ -18,11 +18,6 @@ define([
         'use strict';
 
         var BasketPage = {
-            hideVoucherForm: function() {
-                $('#voucher_form_container').hide();
-                $('#voucher_form_link').show();
-            },
-
             onFail: function() {
                 var message = gettext('The problem occurred during checkout. Please contact support or go to cart again from the about page.');
                 $('#messages').html(_s.sprintf('<div class="alert alert-error">%s</div>', message));
@@ -207,12 +202,6 @@ define([
                 } else {
                     $('.card-type-icon').attr('src', '').addClass('hidden');
                 }
-            },
-
-            showVoucherForm: function() {
-                $('#voucher_form_container').show();
-                $('#voucher_form_link').hide();
-                $('#id_code').focus();
             },
 
             showCvvTooltip: function() {
@@ -430,21 +419,11 @@ define([
                 $('#card-cvn-help').blur(BasketPage.hideCvvTooltip)
                     .hover(BasketPage.showCvvTooltip, BasketPage.hideCvvTooltip);
 
-                $('#voucher_form_link').on('click', function(event) {
-                    event.preventDefault();
-                    BasketPage.showVoucherForm();
+                $('#voucher_form').on('submit', function() {
+                    $('#apply-voucher-button').attr('disabled', true);
+                    $('#payment-button').attr('disabled', true);
+                    $('.payment-button[type=button]').attr('disabled', true);
                 });
-
-                $('#voucher_form_cancel').on('click', function(event) {
-                    event.preventDefault();
-                    BasketPage.hideVoucherForm();
-                });
-
-                // $('#voucher_form').on('submit', function() {
-                //     $('#apply-voucher-button').attr('disabled', true);
-                //     $('#payment-button').attr('disabled', true);
-                //     $('.payment-button[type=button]').attr('disabled', true);
-                // });
 
                 $('select[name=country]').on('change', function() {
                     var country = $('select[name=country]').val(),

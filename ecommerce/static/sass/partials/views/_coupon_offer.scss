@@ -199,7 +199,8 @@
                     text-align: center;
                     background-color: $offer-page-price-blue;
                     color: $offer-page-white;
-                    position: absolute;
+                    position: static;
+                    display: inline-block;
                     top: 10px;
                     text-shadow: 0 1px 1px $dark-blue-shadow;
                     text-transform: uppercase;

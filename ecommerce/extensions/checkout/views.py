@@ -245,10 +245,11 @@ class ReceiptResponseView(ThankYouView):
 
                 PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
                 processor_res = PaymentProcessorResponse.objects.filter(processor_name='postex_cod', transaction_id='Postex COD payment intent for {}'.format(order.number)).first()
-                print(processor_res)
                 tracking_id = processor_res.response.get('payment_intent_res').get('dist').get('trackingNumber')
-                if tracking_id:
+                pickup_address = processor_res.response.get('pickup_address')
+                if tracking_id and pickup_address:
                     context['tracking_id'] = tracking_id
+                    context['pickup_address'] = pickup_address
             except Exception:  # pylint: disable=broad-except
                 log.exception(u"Unexpected error during tracking ID retrieval from Payment Processor Response.")
                 return None

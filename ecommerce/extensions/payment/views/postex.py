@@ -227,7 +227,12 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
     def _send_email(email, tracking_id, user_name, course_key):
         """Send email notification to learner after order with tracking ID."""
         try:
-            ses_client = boto3.client('ses', aws_access_key_id=settings.AWS_ACCESS_KEY_ID, aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+            ses_client = boto3.client(
+                'ses',
+                region_name=settings.AWS_SES_REGION_NAME,
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
+            )
             ses_client.send_email(
                 Destination={'ToAddresses': [email]},
                 Message={
@@ -236,7 +241,8 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
                                 'Charset': 'UTF-8',
                             'Data': 'Hi {},\nThis is an acknowledgement email for ' +
                                 'your Cash on Delivery order with tracking ID {} for ' +
-                                'course {}.'.format(user_name, tracking_id, course_key)
+                                'course {}.\n\nInstructions to enroll in this course ' +
+                                'will be provided by our COD respresentative'.format(user_name, tracking_id, course_key)
                         },
                     },
                     'Subject': {
@@ -296,7 +302,7 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
         basket_res = request.GET.dict()
         order_id = basket_res['orderRefNum']
 
-        address = '{} {}, {}, {} - {}'.format(
+        address = '{} {}, {}, {}, {} - {}'.format(
             data.data['street_address'],
             data.data['address_line2'],
             data.data['city'],
@@ -329,6 +335,8 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
         self.payment_processor.record_processor_response(
             {
                 'response': basket_res,
+                'data': data.data,
+                'pickup_address': address,
                 'payment_intent_res': payment_intent_res,
                 'remote': request.META.get('REMOTE_ADDR'),
                 'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
@@ -336,6 +344,10 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             },
             transaction_id=self.processor_message.format(order_id)
         )
+        if basket_res['status'] != 200:
+            logger.error('Postex COD order placement unsuccessful for {}, processor response {}'.format(basket_res, payment_intent_res))
+            return Response(status=HTTP_400_BAD_REQUEST)
+            
         basket = self._get_basket(order_id)
         if not basket:
             logger.error('Basket not found for {}'.format(basket_res))
