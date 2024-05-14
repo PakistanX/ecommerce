@@ -316,7 +316,7 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             "customerPhone": data.data['phone_number'],
             "deliveryAddress": address,
             "invoiceDivision": 0,
-            "invoicePayment": int(float(basket_res['amount'])) + fixed_delivery_charges,
+            "invoicePayment": int(float(basket_res['amount'])) + int(fixed_delivery_charges),
             "items": 1,
             "orderRefNumber": order_id,
             "orderType": "Normal",
