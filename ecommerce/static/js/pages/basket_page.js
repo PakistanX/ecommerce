@@ -403,6 +403,7 @@ define([
                         $('#address-review').html(values.find((v) => v.name === 'street_address').value);
                         $('#address-form').hide();
                         $('#review-form').show();
+                        $('#breadcrumb-nav').html("Cart / Details / <strong>Review</strong> / Payment / Confirmation");
                         $(window).scrollTop(0);
                     }
                 });
@@ -411,6 +412,7 @@ define([
                     $(window).scrollTop(0);
                     $('#address-form').show();
                     $('#review-form').hide();
+                    $('#breadcrumb-nav').html("Cart / <strong>Details</strong> / Review / Payment / Confirmation");
                 });
                 $('#card-cvn-help').on('click touchstart', function(event) {
                     event.preventDefault();
@@ -423,6 +425,7 @@ define([
                     $('#apply-voucher-button').attr('disabled', true);
                     $('#payment-button').attr('disabled', true);
                     $('.payment-button[type=button]').attr('disabled', true);
+                    $('#breadcrumb-nav').style.display = 'none';
                 });
 
                 $('select[name=country]').on('change', function() {
