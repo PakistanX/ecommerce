@@ -587,6 +587,7 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
             'lms_url_root': site_configuration.lms_url_root,
             'xstack_config': XStack(self.request.site).configuration,
             'cities_list': PostExCOD(self.request.site).get_cities_list,
+            'user_email': self.request.user.email,
             'disable_client_redirect_checkout': waffle.switch_is_active(CLIENT_REDIRECT_DISABLED_CHECKOUT_SWITCH)
         })
         return context

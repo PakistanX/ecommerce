@@ -224,36 +224,16 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
         return PostExCOD(self.request.site)
     
     @staticmethod
-    def _send_email(email, tracking_id, user_name, course_key):
+    def _send_email(tracking_id, user, course_key, site_configuration):
         """Send email notification to learner after order with tracking ID."""
+        api_url = site_configuration.commerce_api_client
+        logger.info('username:{} course_key:{}'.format(user, course_key))
         try:
-            ses_client = boto3.client(
-                'ses',
-                region_name=settings.AWS_SES_REGION_NAME,
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-            )
-            ses_client.send_email(
-                Destination={'ToAddresses': [email]},
-                Message={
-                        'Body': {
-                            'Text': {
-                                'Charset': 'UTF-8',
-                            'Data': 'Hi {},\nThis is an acknowledgement email for ' +
-                                'your Cash on Delivery order with tracking ID {} for ' +
-                                'course {}.\n\nInstructions to enroll in this course ' +
-                                'will be provided by our COD respresentative'.format(user_name, tracking_id, course_key)
-                        },
-                    },
-                    'Subject': {
-                        'Charset': 'UTF-8',
-                        'Data': 'Order Confirmation Email | Tracking ID {}'.format(tracking_id),
-                    },
-                },
-                Source='no-reply@ilmx.org',
-            )
+            api_resource_name = 'cod_order_mail/{}/{}/{}'.format(user, course_key, tracking_id)
+            endpoint = getattr(api_url, api_resource_name)
+            endpoint().get()
         except Exception:  # pylint: disable=broad-except
-            logger.exception('Failed to send Postex COD order confirmation notification for [%s] [%s].', user_name, course_key)
+            logger.exception('Failed to send Postex COD order confirmation notification for [%s] [%s].', user, course_key)
 
     def _get_basket(self, payment_id):
         """
@@ -365,9 +345,8 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             logger.warning('Exception in create order for {}'.format(basket_res))
             return Response(status=HTTP_400_BAD_REQUEST)
 
-        email = data.data['email']
         tracking_id = payment_intent_res.get('dist').get('trackingNumber')
-        self._send_email(email, tracking_id, basket.owner.username, basket.all_lines()[0].product.course.id)
+        self._send_email(tracking_id, basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
 
         receipt_url = get_receipt_page_url(
             order_number=basket.order_number,
