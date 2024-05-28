@@ -425,7 +425,7 @@ define([
                     $('#apply-voucher-button').attr('disabled', true);
                     $('#payment-button').attr('disabled', true);
                     $('.payment-button[type=button]').attr('disabled', true);
-                    $('#breadcrumb-nav').style.display = 'none';
+                    $('#breadcrumb-nav').hide();
                 });
 
                 $('select[name=country]').on('change', function() {

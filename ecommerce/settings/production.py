@@ -40,19 +40,6 @@ def get_env_setting(setting):
 # Email configuration
 EMAIL_BACKEND = 'django_ses.SESBackend'
 
-# # AWS Configs
-# AWS_ACCESS_KEY_ID = get_env_setting('AWS_ACCESS_KEY_ID')
-# AWS_SECRET_ACCESS_KEY = get_env_setting('AWS_SECRET_ACCESS_KEY')
-# AWS_SES_REGION_NAME = get_env_setting('AWS_SES_REGION_NAME')
-
-
-# AWS Configs
-AWS_ACCESS_KEY_ID = environ.get('AWS_ACCESS_KEY_ID', '')
-AWS_SECRET_ACCESS_KEY = environ.get('AWS_SECRET_ACCESS_KEY', '')
-AWS_SES_REGION_NAME = environ.get('AWS_SES_REGION_NAME', '')
-
-
-
 # HOST CONFIGURATION
 # See: https://docs.djangoproject.com/en/1.5/releases/1.5/#allowed-hosts-required-in-production
 ALLOWED_HOSTS = ['*']
