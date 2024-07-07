@@ -6,26 +6,107 @@ from collections import OrderedDict
 
 import requests
 
-from django.core.exceptions import MultipleObjectsReturned
+from django.http import HttpResponseBadRequest
 from ecommerce.extensions.api.serializers import PaymentPostBackSerializer
 from ecommerce.extensions.basket.utils import basket_add_organization_attribute
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.processors.xstack import XStack
-from oscar.apps.partner import strategy
-from oscar.apps.payment.exceptions import PaymentError
-from oscar.core.loading import get_class, get_model
+from oscar.core.loading import get_model
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
 
-class XStackPostBackView(EdxOrderPlacementMixin, APIView):
-    """Receipt redirection and xstack payment intent"""
+def _get_basket(request, basket_id):
+        """
+        Retrieve a basket using a basket ID.
+        """
+        try:
+            basket = request.user.baskets.get(id=basket_id)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception(u"Unexpected error during basket retrieval while executing PostEx COD transaction.")
+            return None
+        basket.strategy = request.strategy
+        basket_add_organization_attribute(basket, request.GET)
+        basket.freeze()
 
-    processor_message = 'XStack payment intent for {}'
+        return basket
+
+class XStackPostBackView(APIView):
+    """Xstack payment intent"""
+
+    @property
+    def payment_processor(self):
+        return XStack(self.request.site)
+   
+    def post(self, request):
+        """
+        This creates a payment intent , manages order and basket status,
+        creates receipt url that is then shown to user
+        """
+        secret_key = self.payment_processor.configuration['secret_key']
+        hmac_secret = self.payment_processor.configuration['hmac_secret']
+        account_id = self.payment_processor.configuration['account_id']
+        data = PaymentPostBackSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+
+        basket = _get_basket(request, request.data.get('basket_id'))
+        if not basket:
+            logger.exception('Basket not found for ID {}'.format(request.data.get('basket_id')))
+            return HttpResponseBadRequest('Unable to find linked basket')
+
+        payload = OrderedDict([
+            ('amount', int(float(basket.total_incl_tax))),
+            ('currency', "PKR"),
+            ('payment_method_types', "card"),
+            ('customer', OrderedDict([
+                ('email', data.data['email']),
+                ('name', '{} {}'.format(data.data['first_name'], data.data['last_name'])),
+                ('phone', data.data['phone_number']),
+            ])),
+            ('shipping', OrderedDict([
+                ('address1', '{}, {}'.format(data.data['street_address'], data.data['address_line2'])),
+                ('city', data.data['city']),
+                ('country', data.data['country']),
+                ('province', data.data['state']),
+                ('zip', data.data['post_code'])
+            ])),
+            ("metadata", OrderedDict([('order_reference', "{}-{}".format(request.user.id, basket.order_number))]))
+        ])
+
+        json_body = json.dumps(payload, separators=(',', ':')).encode('utf-8')
+        signature = hmac.new(hmac_secret.encode('utf-8'), json_body, hashlib.sha256).hexdigest()
+        headers = {
+            "x-api-key": secret_key,
+            "Content-Type": "application/json",
+            "x-signature": signature,
+            "x-account-id": account_id,
+        }
+        payment_intent_create_res = requests.post(
+            self.payment_processor.configuration['payment_intent_create_url'],
+            data=json_body,
+            headers=headers,
+        )
+        payment_intent_create_res = payment_intent_create_res.json()
+
+        try:
+            if payment_intent_create_res['responseStatus'] == 'OK':
+                return Response(
+                    data={
+                        'encryptionKey':payment_intent_create_res['data']['encryptionKey'],
+                        'clientSecret':payment_intent_create_res['data']['pi_client_secret'],
+                        'paymentIntentId':payment_intent_create_res['data']['_id'],
+                    },
+                    status=HTTP_200_OK
+                )
+        except Exception as e:
+            logger.exception('Failed to create xstack payment intent {}, response {}.', basket.order_number, payment_intent_create_res)
+            return HttpResponseBadRequest('Some error occurred during payment intent creation, '+payment_intent_create_res['message'])
+
+class XStackOrderCompletionView(EdxOrderPlacementMixin, APIView):
 
     @property
     def payment_processor(self):
@@ -43,114 +124,44 @@ class XStackPostBackView(EdxOrderPlacementMixin, APIView):
         except Exception:  # pylint: disable=broad-except
             logger.exception('Failed to send enrollment notification for [%s] [%s] from LMS.', user, course_key)
 
-    def _get_basket(self, payment_id):
-        """
-        Retrieve a basket using a payment ID.
-
-        Arguments:
-            payment_id: payment_id received from payment intent url generated by xstack payment processor.
-
-        Returns:
-            It will return related basket or log exception and return None if
-            duplicate payment_id received or any other exception occurred.
-
-        """
-        try:
-            basket = PaymentProcessorResponse.objects.get(
-                processor_name=self.payment_processor.NAME,
-                transaction_id=payment_id
-            ).basket
-        except MultipleObjectsReturned:
-            logger.warning(u"Duplicate payment ID [%s] received from xstack processor.", payment_id)
-
-            if 'Redirection' not in self.processor_message:
-                return None
-
-            logger.info('Looking into multiple baskets for view')
-            basket = PaymentProcessorResponse.objects.filter(
-                processor_name=self.payment_processor.NAME,
-                transaction_id=payment_id
-            )[0].basket
-        except Exception:  # pylint: disable=broad-except
-            logger.exception(u"Unexpected error during basket retrieval while executing PostEx payment.")
-            return None
-
-        basket.strategy = strategy.Default()
-        basket_add_organization_attribute(basket, self.request.GET)
-        return basket
-
     def post(self, request):
-        """
-        This creates a payment intent , manages order and basket status,
-        creates receipt url that is then shown to user
-        """
-        secret_key = self.payment_processor.configuration['secret_key']
-        hmac_secret = self.payment_processor.configuration['hmac_secret']
-        account_id = self.payment_processor.configuration['account_id']
-        data = PaymentPostBackSerializer(data=request.data)
-        data.is_valid(raise_exception=True)
-        basket_res = request.GET.dict()
-        payment_id = basket_res['orderRefNum']
+        payment_intent_id = request.data.get('payment_intent_id')
+        basket_id = request.data.get('basket_id')
 
-        payload = OrderedDict([
-            ('amount', basket_res['amount']),
-            ('currency', "PKR"),
-            ('payment_method_types', "card"),
-            ('customer', OrderedDict([
-                ('email', data.data['email']),
-                ('name', '{} {}'.format(data.data['first_name'], data.data['last_name'])),
-                ('phone', data.data['phone_number']),
-            ])),
-            ('shipping', OrderedDict([
-                ('address1', '{}, {}'.format(data.data['street_address'], data.data['address_line2'])),
-                ('city', data.data['city']),
-                ('country', data.data['country']),
-                ('province', data.data['state']),
-                ('zip', data.data['post_code'])
-            ])),
-            ("metadata", OrderedDict([('order_reference', "{}-{}".format(request.user.id,payment_id))]))
-        ])
-
-        json_body = json.dumps(payload, separators=(',', ':')).encode('utf-8')
-        signature = hmac.new(hmac_secret.encode('utf-8'), json_body, hashlib.sha256).hexdigest()
-        headers = {
-            "x-api-key": secret_key,
-            "Content-Type": "application/json",
-            "x-signature": signature,
-            "x-account-id": account_id,
-        }
-        payment_intent_res = requests.post(
-            self.payment_processor.configuration['payment_intent_url'],
-            data=json_body,
-            headers=headers
-        )
-        basket_res['status'] = payment_intent_res.status_code
-        payment_intent_res = payment_intent_res.json()
-        self.payment_processor.record_processor_response(
-            {
-                'response': basket_res,
-                'remote': request.META.get('REMOTE_ADDR'),
-                'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
-                'host': request.META.get('HTTP_HOST'),
-            },
-            transaction_id=self.processor_message.format(payment_id)
-        )
-        basket = self._get_basket(payment_id)
+        basket = _get_basket(request, basket_id)
         if not basket:
-            logger.error('Basket not found for {}'.format(basket_res))
-            return Response(status=HTTP_400_BAD_REQUEST)
+            logger.exception('Basket not found for ID {}'.format(basket_id))
+            return HttpResponseBadRequest('Unable to find linked basket')
+
+        headers = {
+            "x-api-key": self.payment_processor.configuration['secret_key'],
+            "x-account-id": self.payment_processor.configuration['account_id'],
+        }
+        payment_intent_retrieve_res = requests.get(
+            self.payment_processor.configuration['payment_intent_retrieve_url']+payment_intent_id,
+            headers=headers,
+        )
+        payment_intent_retrieve_res = payment_intent_retrieve_res.json()
 
         try:
-            self.handle_payment(basket_res, basket)
-        except PaymentError:
-            logger.info('Payment error in processing {}'.format(basket_res))
-            return Response(status=HTTP_400_BAD_REQUEST)
+            self.handle_payment(
+                response={
+                    'payment_intent_response': payment_intent_retrieve_res,
+                    'remote': request.META.get('REMOTE_ADDR'),
+                    'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
+                    'host': request.META.get('HTTP_HOST'),
+                },
+                basket=basket,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.info('Payment error in processing {}'.format(basket_id))
+            return HttpResponseBadRequest(str(e))
 
         try:
             order = self.create_order(request, basket)
-        except Exception:  # pylint: disable=broad-except
-            logger.warning('Exception in create order for {}'.format(basket_res))
-            return Response(status=HTTP_400_BAD_REQUEST)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning('Exception in create order for {}'.format(basket_id))
+            return HttpResponseBadRequest(str(e))
 
         try:
             self.handle_post_order(order)
@@ -166,8 +177,6 @@ class XStackPostBackView(EdxOrderPlacementMixin, APIView):
         return Response(
             data={
                 'receipt_url':receipt_url,
-                'encryptionKey':payment_intent_res['data']['encryptionKey'],
-                'clientSecret':payment_intent_res['data']['pi_client_secret']
             },
             status=HTTP_200_OK
         )

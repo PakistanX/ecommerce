@@ -181,32 +181,7 @@ class PostExCOD(BasePaymentProcessor):
             KeyError: If a required setting is not configured for this payment processor
         """
         super(PostExCOD, self).__init__(site)
-
-    @staticmethod
-    def get_courseid_title(line):
-        """
-        Get CourseID & Title from basket item
-
-        Arguments:
-            line: basket item
-
-        Returns:
-             Concatenated string containing course id & title if exists.
-        """
-        courseid = ''
-        line_course = line.product.course
-        if line_course:
-            courseid = "{}|".format(line_course.id)
-        return courseid + line.product.title
     
-    @staticmethod
-    def create_ordered_dict(data):
-        """Create ordered dict from list of tuples."""
-        ordered_data = OrderedDict()
-        for key, value in data:
-            ordered_data[key] = value
-        return ordered_data
-
     def get_transaction_parameters(self, basket, request=None, use_client_side_checkout=False, **kwargs):
         """
         Create a new PostEx COD payment request.
@@ -220,28 +195,8 @@ class PostExCOD(BasePaymentProcessor):
         Returns:
             dict: PostEx-COD-specific parameters required to complete a transaction.
         """
-        logger.info('Starting postex COD payment url creation')
-        order_id = basket.order_number
-        amount = basket.total_incl_tax
-        user_name = basket.owner.username
-        data = self.create_ordered_dict([
-            ('customerName', user_name),
-            ('amount', amount),
-            ('orderRefNum', order_id),
-            ('orderDetail', self.get_courseid_title(basket.all_lines()[0])),
-        ])
-        
-        logger.info('Generated data: {}'.format(data))
-        query_str = urlencode(data)
-        logger.info('Generated str: {}'.format(query_str))
-        self.record_processor_response({
-            'orderRefNum': order_id,
-            'amount': amount,
-            'customerName': user_name,
-        }, transaction_id=order_id, basket=basket)
-        logger.info("Successfully created Postex COD payment url [%s] for basket [%d].", order_id, basket.id)
-        data['payment_page_url'] = '{}?{}'.format(reverse('postex:cod'), query_str)
-        return {'payment_page_url': data['payment_page_url']}
+        logger.info("Successfully created Postex COD payment url [%s] for basket [%d].", basket.order_number, basket.id)
+        return {'payment_page_url': '{}'.format(reverse('postex:cod'))}
 
     def handle_processor_response(self, response, order_id=None, basket=None):
         """
@@ -254,43 +209,36 @@ class PostExCOD(BasePaymentProcessor):
             basket (Basket): Basket being purchased via the payment processor.
 
         Raises:
-            GatewayError: Indicates a general error or unexpected behavior on the part of PostEx which prevented
+            Exception: Indicates a general error or unexpected behavior on the part of PostEx which prevented
                 an approved payment from being executed.
 
         Returns:
             HandledProcessorResponse
         """
-        order_id = response.get('orderRefNum')
         logger.info('\n\n\n{}\n\n\n'.format(response))
 
-        response_statuses = {
-            '500': 'Transaction Fail',
-        }
-
         try:
-            payment_status = response['status']
+            payment_status = response['payment_intent_response']['statusMessage']
+            if payment_status != 'ORDER HAS BEEN CREATED':
+                msg = 'Postex COD order placement unsuccessful for order ID {}'.format(basket.order_number)
+                self.record_processor_response(
+                    response,
+                    transaction_id='Postex COD order placement unsuccessful for order ID {}'.format(basket.order_number),
+                    basket=basket
+                )
+                raise Exception(msg)
         except KeyError:
-            msg = 'Response did not contain "status": {}'.format(response)
-            self.record_processor_response({'error_msg': msg}, transaction_id=order_id, basket=basket)
-            raise GatewayError()
-
-        if payment_status != 200:
-            msg = 'Payment unsuccessful due to {}:{}'.format(
-                payment_status,
-                response_statuses.get(payment_status, 'Status Code not found in expected responses')
-            )
-            self.record_processor_response({'error_msg': msg}, transaction_id=order_id, basket=basket)
-            raise GatewayError(msg)
-        self.record_processor_response(response, transaction_id=order_id, basket=basket)
-        logger.info("Successfully recorded Postex COD payment [%s] for basket [%d].", order_id, basket.id)
-
-        currency = basket.currency
-        total = basket.total_incl_tax
+            msg = 'Response did not contain payment_status: {}'.format(response)
+            self.record_processor_response({'error_msg': msg}, transaction_id=basket.order_number, basket=basket)
+            raise Exception()
+        
+        self.record_processor_response(response, transaction_id='Postex COD intent created for {}'.format(basket.order_number), basket=basket)
+        logger.info("Successfully recorded Postex COD payment intent [%s] for basket [%d].", basket.order_number, basket.id)
 
         return HandledProcessorResponse(
-            transaction_id=order_id,
-            total=total,
-            currency=currency,
+            transaction_id=basket.order_number,
+            total=basket.total_incl_tax,
+            currency=basket.currency,
             card_number='Postex COD Account',
             card_type=None
         )
