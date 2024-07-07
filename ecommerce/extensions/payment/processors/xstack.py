@@ -2,11 +2,8 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-from collections import OrderedDict
-from urllib.parse import urlencode
 
 from django.urls import reverse
-from oscar.apps.payment.exceptions import GatewayError
 from ecommerce.extensions.payment.processors import BasePaymentProcessor, HandledProcessorResponse
 
 logger = logging.getLogger(__name__)
@@ -26,31 +23,6 @@ class XStack(BasePaymentProcessor):
         """
         super(XStack, self).__init__(site)
 
-    @staticmethod
-    def get_courseid_title(line):
-        """
-        Get CourseID & Title from basket item
-
-        Arguments:
-            line: basket item
-
-        Returns:
-             Concatenated string containing course id & title if exists.
-        """
-        courseid = ''
-        line_course = line.product.course
-        if line_course:
-            courseid = "{}|".format(line_course.id)
-        return courseid + line.product.title
-
-    @staticmethod
-    def create_ordered_dict(data):
-        """Create ordered dict from list of tuples."""
-        ordered_data = OrderedDict()
-        for key, value in data:
-            ordered_data[key] = value
-        return ordered_data
-
     def get_transaction_parameters(self, basket, request=None, use_client_side_checkout=False, **kwargs):
         """
         Create a new XStack Intent api url.
@@ -65,26 +37,8 @@ class XStack(BasePaymentProcessor):
             dict: XStack-specific parameters required to complete a transaction. Must contain a URL
                 to which users can be directed in order to approve a newly created payment.
         """
-        logger.info('Starting xstack payment url creation')
-        order_id = basket.order_number
-        amount = basket.total_incl_tax
-        user_name = basket.owner.username
-        data = self.create_ordered_dict([
-            ('customerName', user_name),
-            ('amount', amount),
-            ('orderRefNum', order_id),
-        ])
-        logger.info('Generated data: {}'.format(data))
-        query_str = urlencode(data)
-        logger.info('Generated str: {}'.format(query_str))
-        self.record_processor_response({
-            'orderRefNum': order_id,
-            'amount': amount,
-            'customerName': user_name
-        }, transaction_id=order_id, basket=basket)
-        logger.info("Successfully created XStack payment url [%s] for basket [%d].", order_id, basket.id)
-        data['payment_page_url'] = '{}?{}'.format(reverse('xstack:xstack_payment_intent'), query_str)
-        return {'payment_page_url': data['payment_page_url']}
+        logger.info("Successfully created XStack payment url [%s] for basket [%d].", basket.order_number, basket.id)
+        return {'payment_page_url': '{}'.format(reverse('xstack:xstack_payment_intent'))}
 
     def handle_processor_response(self, response, basket=None):
         """
@@ -97,43 +51,42 @@ class XStack(BasePaymentProcessor):
             basket (Basket): Basket being purchased via the payment processor.
 
         Raises:
-            GatewayError: Indicates a general error or unexpected behavior on the part of XStack which prevented
+            Exception: Indicates a general error or unexpected behavior on the part of XStack which prevented
                 an approved payment from being executed.
 
         Returns:
             HandledProcessorResponse
         """
-        order_id = response.get('orderRefNum')
         logger.info('\n\n\n{}\n\n\n'.format(response))
 
-        response_statuses = {
-            '500': 'Transaction Fail',
-        }
-
         try:
-            payment_status = response['status']
+            payment_status = response['payment_intent_response']['data']['last_payment_response']['status']
+            if payment_status != 'PAYMENT_CAPTURED':
+                msg = 'Payment unsuccessful for payment ID {}'.format(
+                    response['payment_intent_response']['data']['_id'],
+                )
+                self.record_processor_response(
+                    response,
+                    transaction_id='Payment unsuccessful for payment ID {}, basket order no {}'.format(response['payment_intent_response']['data']['_id'], basket.order_number),
+                    basket=basket,
+                )
+                raise Exception(msg)
         except KeyError:
-            msg = 'Response did not contain "status": {}'.format(response)
-            self.record_processor_response({'error_msg': msg}, transaction_id=order_id, basket=basket)
-            raise GatewayError()
+            msg = 'Response did not contain payment_status: {}'.format(response)
+            self.record_processor_response({'error_msg': msg}, transaction_id=basket.order_number, basket=basket)
+            raise Exception()
 
-        if payment_status != 200:
-            msg = 'Payment unsuccessful due to {}:{}'.format(
-                payment_status,
-                response_statuses.get(payment_status, 'Status Code not found in expected responses')
-            )
-            self.record_processor_response({'error_msg': msg}, transaction_id=order_id, basket=basket)
-            raise GatewayError(msg)
-        self.record_processor_response(response, transaction_id=order_id, basket=basket)
-        logger.info("Successfully recorded XStack payment [%s] for basket [%d].", order_id, basket.id)
-
-        currency = basket.currency
-        total = basket.total_incl_tax
+        self.record_processor_response(
+            response,
+            transaction_id='XStack payment completion for {}'.format(basket.order_number),
+            basket=basket,
+        )
+        logger.info("Successfully recorded XStack payment [%s] for basket [%d].", basket.order_number, basket.id)
 
         return HandledProcessorResponse(
-            transaction_id=order_id,
-            total=total,
-            currency=currency,
+            transaction_id=basket.order_number,
+            total=basket.total_incl_tax,
+            currency=basket.currency,
             card_number='XStack Account',
             card_type=None
         )

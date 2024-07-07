@@ -172,7 +172,9 @@ PAYMENT_PROCESSOR_CONFIG = {
             'hmac_secret': None,
             'account_id': None,
             'secret_key': None,
-            'payment_intent_url': None
+            'payment_intent_create_url': None,
+            'payment_intent_retrieve_url': None,
+            'xpay_lib_url': None,
         },
         'stripe': {
             'publishable_key': None,

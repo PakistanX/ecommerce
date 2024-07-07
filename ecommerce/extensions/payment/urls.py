@@ -33,7 +33,8 @@ POSTEX_URLS = [
 ]
 
 XSTACK_URLS = [
-    url(r'^xstack/$', xstack.XStackPostBackView.as_view(), name='xstack_payment_intent'),
+    url(r'^postback/$', xstack.XStackPostBackView.as_view(), name='xstack_payment_intent'),
+    url(r'^order$', xstack.XStackOrderCompletionView.as_view(), name='xstack_order_completion'),
 ]
 
 SDN_URLS = [
