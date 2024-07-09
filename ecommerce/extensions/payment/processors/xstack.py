@@ -60,8 +60,8 @@ class XStack(BasePaymentProcessor):
         logger.info('\n\n\n{}\n\n\n'.format(response))
 
         try:
-            payment_status = response['payment_intent_response']['data']['last_payment_response']['status']
-            if payment_status != 'PAYMENT_CAPTURED':
+            payment_status = response['payment_intent_response']['data']['pi_status']
+            if payment_status != 'succeeded':
                 msg = 'Payment unsuccessful for payment ID {}'.format(
                     response['payment_intent_response']['data']['_id'],
                 )

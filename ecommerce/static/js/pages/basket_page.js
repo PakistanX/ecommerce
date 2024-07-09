@@ -372,18 +372,6 @@ define([
                         } else if (v.name === 'post_code' && !/^\d{5}(?:[-\s]\d{4})?$/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid postal code')
                             return true;
-                        } else if (v.name === 'city' && (v.value === "Select your city" || v.value === "")) {
-                            $(`#${v.name}-err`).html('This field is invalid, please use a valid city')
-                            v.value = v.value.trim()
-                            return true;
-                        }
-                        else if (v.name === 'state' && v.value === "Select your state") {
-                            $(`#${v.name}-err`).html('This field is invalid, please use a valid state')
-                            return true;
-                        }
-                        else if (v.name === 'country' && v.value === "Select your country") {
-                            $(`#${v.name}-err`).html('This field is invalid, please use a valid country')
-                            return true;
                         } else if (v.name === 'phone_number' && !/^\d{11}$/.test(v.value)) {
                             $(`#${v.name}-err`).html('This field is invalid, please use a valid phone number')
                             return true;
@@ -394,9 +382,21 @@ define([
                             $(`#${v.name}-err`).html('')
                             return false;
                         }
-
                     });
-                    if (errs.find((e) => e)) {
+                    let validation_error = false;
+                    if (!values.some(v => v.name === 'state')) {
+                        $('#state-err').html('This field is required');
+                        validation_error = true;
+                    } else {
+                        $('#state-err').html('')
+                    }
+                    if (!values.some(v => v.name === 'city')) {
+                        $('#city-err').html('This field is required');
+                        validation_error = true;
+                    } else {
+                        $('#city-err').html('')
+                    }
+                    if (errs.find((e) => e) || validation_error) {
                         return;
                     } else {
                         $('#contact-review').html(values.find((v) => v.name === 'phone_number').value);
