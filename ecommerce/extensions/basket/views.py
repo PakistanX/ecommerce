@@ -425,6 +425,19 @@ class BasketAddItemsView(BasketLogicMixin, APIView):
         properties = {'emitted_at': time.time()}
         track_segment_event(request.site, request.user, 'Basket Add Items View Called', properties)
 
+        token = request.GET.get('token', None)
+        if token:
+            import jwt
+            from django.conf import settings
+
+            JWT_AUTH = 'JWT_AUTH'
+            JWT_SECRET_KEY = getattr(settings, JWT_AUTH)['JWT_SECRET_KEY'] if hasattr(settings, JWT_AUTH) else ''
+            payload = jwt.decode(token, JWT_SECRET_KEY)
+            checkout_data = payload.get('checkout_data')
+
+            if request.user.email == checkout_data['email']:
+                request.session['checkout_data'] = checkout_data
+
         try:
             skus = self._get_skus(request)
             products = self._get_products(request, skus)
@@ -590,6 +603,23 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
             'user_email': self.request.user.email,
             'disable_client_redirect_checkout': waffle.switch_is_active(CLIENT_REDIRECT_DISABLED_CHECKOUT_SWITCH)
         })
+
+        checkout_data = self.request.session.get('checkout_data', None)
+
+        if checkout_data:
+            context.update({
+                'lumsx_checkout': True,
+                'user_name': checkout_data.get('name'),
+                'user_phone_number': checkout_data.get('phone_number'),
+                'user_address': checkout_data.get('address'),
+                'user_postal_code': checkout_data.get('postal_code'),
+                'user_city': checkout_data.get('city'),
+                'user_province': checkout_data.get('state'),
+                'user_country': checkout_data.get('country', 'Pakistan'),
+            })
+            # TO:DO: remove from session after receipt
+            # self.request.session.pop('checkout_data')
+            
         return context
 
     @newrelic.agent.function_trace()

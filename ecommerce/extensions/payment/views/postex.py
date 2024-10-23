@@ -279,9 +279,8 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             logger.exception('Basket not found for ID {}'.format(basket_id))
             return HttpResponseBadRequest('Unable to find linked basket')
 
-        address = '{} {}, {}, {}, {} - {}'.format(
-            data.data['street_address'],
-            data.data['address_line2'],
+        address = '{}, {}, {}, {} - {}'.format(
+            data.data['address'],
             data.data['city'],
             data.data['state'],
             data.data['country'],
@@ -289,7 +288,7 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
 
         payload = json.dumps({
             "cityName": data.data['city'],
-            "customerName": '{} {}'.format(data.data['first_name'], data.data['last_name']),
+            "customerName": data.data['fullname'],
             "customerPhone": data.data['phone_number'],
             "deliveryAddress": address,
             "invoiceDivision": 0,

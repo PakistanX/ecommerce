@@ -6,14 +6,13 @@ from collections import OrderedDict
 
 import requests
 
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, JsonResponse
 from ecommerce.extensions.api.serializers import PaymentPostBackSerializer
 from ecommerce.extensions.basket.utils import basket_add_organization_attribute
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.processors.xstack import XStack
 from oscar.core.loading import get_model
-from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
@@ -64,11 +63,11 @@ class XStackPostBackView(APIView):
             ('payment_method_types', "card"),
             ('customer', OrderedDict([
                 ('email', data.data['email']),
-                ('name', '{} {}'.format(data.data['first_name'], data.data['last_name'])),
+                ('name', data.data['fullname']),
                 ('phone', data.data['phone_number']),
             ])),
             ('shipping', OrderedDict([
-                ('address1', '{}, {}'.format(data.data['street_address'], data.data['address_line2'])),
+                ('address1', data.data['address']),
                 ('city', data.data['city']),
                 ('country', data.data['country']),
                 ('province', data.data['state']),
@@ -94,7 +93,7 @@ class XStackPostBackView(APIView):
 
         try:
             if payment_intent_create_res['responseStatus'] == 'OK':
-                return Response(
+                return JsonResponse(
                     data={
                         'encryptionKey':payment_intent_create_res['data']['encryptionKey'],
                         'clientSecret':payment_intent_create_res['data']['pi_client_secret'],
@@ -174,7 +173,7 @@ class XStackOrderCompletionView(EdxOrderPlacementMixin, APIView):
             site_configuration=basket.site.siteconfiguration,
             disable_back_button=True,
         )
-        return Response(
+        return JsonResponse(
             data={
                 'receipt_url':receipt_url,
             },
