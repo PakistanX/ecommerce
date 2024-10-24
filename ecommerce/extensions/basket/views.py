@@ -605,7 +605,6 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
         })
 
         checkout_data = self.request.session.get('checkout_data', None)
-
         if checkout_data:
             context.update({
                 'lumsx_checkout': True,
@@ -617,8 +616,6 @@ class BasketSummaryView(BasketLogicMixin, BasketView):
                 'user_province': checkout_data.get('state'),
                 'user_country': checkout_data.get('country', 'Pakistan'),
             })
-            # TO:DO: remove from session after receipt
-            # self.request.session.pop('checkout_data')
             
         return context
 

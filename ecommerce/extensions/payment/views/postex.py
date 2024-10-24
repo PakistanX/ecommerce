@@ -336,6 +336,8 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             site_configuration=basket.site.siteconfiguration,
             disable_back_button=True,
         )
+        request.session.pop('checkout_data', None)
+
         return Response(
             data={
                 'receipt_url':receipt_url,
