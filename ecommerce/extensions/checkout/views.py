@@ -239,6 +239,10 @@ class ReceiptResponseView(ThankYouView):
             'disable_back_button': self.request.GET.get('disable_back_button', 0),
         })
         context['course_data'] = self._get_course_data(order.basket.all_lines())
+
+        if self.request.GET.get('lumsx_checkout', 0) == '1':
+            context['lumsx_checkout'] = 'true'
+
         if context.get('payment_method') == 'postex_cod':
             try:
                 from oscar.core.loading import get_model

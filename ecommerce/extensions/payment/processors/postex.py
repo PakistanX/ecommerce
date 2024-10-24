@@ -230,7 +230,7 @@ class PostExCOD(BasePaymentProcessor):
         except KeyError:
             msg = 'Response did not contain payment_status: {}'.format(response)
             self.record_processor_response({'error_msg': msg}, transaction_id=basket.order_number, basket=basket)
-            raise Exception()
+            raise Exception('Postex COD response did not contain status. Please check validity of posted data.')
         
         self.record_processor_response(response, transaction_id='Postex COD intent created for {}'.format(basket.order_number), basket=basket)
         logger.info("Successfully recorded Postex COD payment intent [%s] for basket [%d].", basket.order_number, basket.id)
