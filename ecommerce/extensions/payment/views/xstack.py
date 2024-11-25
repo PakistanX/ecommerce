@@ -8,7 +8,7 @@ import requests
 
 from django.http import HttpResponseBadRequest, JsonResponse
 from ecommerce.extensions.api.serializers import PaymentPostBackSerializer
-from ecommerce.extensions.basket.utils import basket_add_organization_attribute
+from ecommerce.extensions.basket.utils import apply_offers_on_basket, basket_add_organization_attribute
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.processors.xstack import XStack
@@ -30,6 +30,7 @@ def _get_basket(request, basket_id):
             return None
         basket.strategy = request.strategy
         basket_add_organization_attribute(basket, request.GET)
+        apply_offers_on_basket(request, basket)
         basket.freeze()
 
         return basket

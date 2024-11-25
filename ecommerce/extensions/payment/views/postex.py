@@ -10,7 +10,7 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 from ecommerce.extensions.api.serializers import PaymentPostBackSerializer
-from ecommerce.extensions.basket.utils import basket_add_organization_attribute
+from ecommerce.extensions.basket.utils import apply_offers_on_basket, basket_add_organization_attribute
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
 from ecommerce.extensions.checkout.utils import get_receipt_page_url
 from ecommerce.extensions.payment.processors.postex import PostEx, PostExCOD
@@ -245,6 +245,7 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             return None
         basket.strategy = request.strategy
         basket_add_organization_attribute(basket, request.GET)
+        apply_offers_on_basket(request, basket)
         basket.freeze()
 
         return basket

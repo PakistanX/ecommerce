@@ -152,6 +152,8 @@ class BasketLogicMixin:
                 'seat_type': self._get_certificate_type_display_value(product),
             })
             lines_data.append(line_data)
+        if lines:
+            context_updates['benefit_value'] = self._get_benefit_value(lines[0])
 
         return context_updates, lines_data
 
@@ -476,7 +478,10 @@ class BasketAddItemsView(BasketLogicMixin, APIView):
             return e.response
 
     def _get_skus(self, request):
-        skus = [escape(sku) for sku in request.GET.getlist('sku')]
+        raw_skus = request.GET.getlist('sku')
+        if len(raw_skus) == 1 and ',' in raw_skus[0]:
+            raw_skus = raw_skus[0].split(',')
+        skus = [escape(sku.strip()) for sku in raw_skus if sku.strip()]
         if not skus:
             raise BadRequestException(_('No SKUs provided.'))
         return skus
