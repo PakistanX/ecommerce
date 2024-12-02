@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import time
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 import dateutil.parser
@@ -143,6 +143,7 @@ class BasketLogicMixin:
 
             context_updates['order_details_msg'] = self._get_order_details_message(product)
             context_updates['switch_link_text'], context_updates['partner_sku'] = get_basket_switch_data(product)
+            context_updates['disable_cod_order'] = True if(product.expires.date() - datetime.today().date()) <= timedelta(days=7) else False
 
             line_data.update({
                 'sku': product.stockrecords.first().partner_sku,

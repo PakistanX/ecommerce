@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import json
 import logging
 
@@ -251,15 +252,18 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
         return basket
     
     @staticmethod
-    def _get_courseid_title(line):
+    def _get_courseid_title(lines):
         """
-        Get CourseID & Title from basket ite
+        Get CourseID & Title from basket
         """
-        courseid = ''
-        line_course = line.product.course
-        if line_course:
-            courseid = "{}|".format(line_course.id)
-        return courseid + line.product.title
+        order_details = []
+        for line in lines:
+            courseid = ''
+            line_course = line.product.course
+            if line_course:
+                courseid = "{}|".format(line_course.id)
+            order_details.append(courseid + line.product.title)
+        return ' + '.join(order_details)
 
     def post(self, request):
         """
@@ -279,6 +283,10 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
         if not basket:
             logger.exception('Basket not found for ID {}'.format(basket_id))
             return HttpResponseBadRequest('Unable to find linked basket')
+    
+        for line in basket.all_lines():
+            if(line.product.expires.date() - datetime.today().date()) <= timedelta(days=7):
+                return HttpResponseBadRequest('COD order is closed 7 days prior to course upgradation end date. Please use online payment or contact support.')
 
         address = '{}, {}, {}, {} - {}'.format(
             data.data['address'],
@@ -298,7 +306,7 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             "orderRefNumber": basket.order_number,
             "orderType": "Normal",
             "pickupAddressCode": pickup_address_code,
-            'orderDetail': self._get_courseid_title(basket.all_lines()[0]),
+            'orderDetail': self._get_courseid_title(basket.all_lines()),
         })
 
         headers = {
