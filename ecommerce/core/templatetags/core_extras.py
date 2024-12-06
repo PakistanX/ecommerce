@@ -55,6 +55,16 @@ def course_organization(course_key):
     return CourseKey.from_string(course_key).org
 
 
+@register.filter(name='dict_get')
+def dict_get(dictionary, key):
+    """
+    Custom filter to get a value from a dictionary using a dynamic key.
+    """
+    if not isinstance(dictionary, dict):
+        return None
+    return dictionary.get(key, None)
+
+
 class CaptureasNode(template.Node):
     def __init__(self, nodelist, varname):
         self.nodelist = nodelist

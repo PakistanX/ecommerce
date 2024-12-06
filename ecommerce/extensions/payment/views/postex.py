@@ -128,18 +128,6 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
         """Forbidden response for invalid hosts."""
         return Response(status=HTTP_403_FORBIDDEN)
 
-    @staticmethod
-    def _send_email(user, course_key, site_configuration):
-        """Send email notification to learner after enrollment."""
-        api_url = site_configuration.commerce_api_client
-        logger.info('username:{} course_key:{}'.format(user, course_key))
-        try:
-            api_resource_name = 'enrollment_mail/{}/{}'.format(user, course_key)
-            endpoint = getattr(api_url, api_resource_name)
-            endpoint().get()
-        except Exception:  # pylint: disable=broad-except
-            logger.exception('Failed to send enrollment notification for [%s] [%s] from LMS.', user, course_key)
-
     def process_payment(self, basket, request, postex_response):
         """Process payment and enroll user in course."""
 
@@ -168,7 +156,8 @@ class PostExPostBackAPI(PostExPaymentResponse, APIView):
             )
             self.log_order_placement_exception(basket.order_number, basket.id)
 
-        self._send_email(basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
+        for line in basket.all_lines():
+            self._send_email(basket.owner.username, line.product.course.id, request.site.siteconfiguration)
         trigger_active_campaign_event.delay(
             'payment_successful_view', basket.owner.email, basket.all_lines()[0].product.course.id
         )
@@ -221,8 +210,7 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
     def payment_processor(self):
         return PostExCOD(self.request.site)
     
-    @staticmethod
-    def _send_email(tracking_id, user, course_key, site_configuration):
+    def _send_email(self, tracking_id, user, course_key, site_configuration):
         """
         Send email notification to learner after order with tracking ID.
         """
@@ -338,7 +326,8 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
             return HttpResponseBadRequest(str(e))
 
         tracking_id = payment_intent_res.get('dist').get('trackingNumber')
-        self._send_email(tracking_id, basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
+        for line in basket.all_lines():
+            self._send_email(tracking_id, basket.owner.username, line.product.course.id, request.site.siteconfiguration)
 
         receipt_url = get_receipt_page_url(
             order_number=basket.order_number,

@@ -118,6 +118,7 @@ class BasketLogicMixin:
             'is_enrollment_code_purchase': False
         }
 
+        disable_cod_order = False
         lines_data = []
         for line in lines:
             product = line.product
@@ -143,7 +144,9 @@ class BasketLogicMixin:
 
             context_updates['order_details_msg'] = self._get_order_details_message(product)
             context_updates['switch_link_text'], context_updates['partner_sku'] = get_basket_switch_data(product)
-            context_updates['disable_cod_order'] = True if(product.expires.date() - datetime.today().date()) <= timedelta(days=7) else False
+            if(product.expires.date() - datetime.today().date()) <= timedelta(days=7):
+                disable_cod_order = True
+            context_updates['disable_cod_order'] = disable_cod_order
 
             line_data.update({
                 'sku': product.stockrecords.first().partner_sku,

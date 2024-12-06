@@ -175,15 +175,16 @@ class ReceiptResponseView(ThankYouView):
             response.context_data['order_dashboard_url'] = learner_portal_url
         return response
 
-    def _get_course_data(self, lines):
+    def _get_course_data(self, line):
         """
-        Return course data from first element of list as we are restricting cart to single item.
+        Return course data for a line in cart.
 
         Args:
-            lines (list): List of basket lines.
+            line (Product Line): basket line.
         Returns:
-            A dictionary containing product title, course key, image URL end organisation.
+            A  dictionary containing product title, course key, image URL end organisation.
         """
+
         course_data = {
             'product_title': None,
             'course_key': None,
@@ -192,7 +193,7 @@ class ReceiptResponseView(ThankYouView):
         }
 
         try:
-            product = lines[0].product
+            product = line.product
         except IndexError:
             log.error('No lines found in basket')
             return course_data
@@ -238,7 +239,11 @@ class ReceiptResponseView(ThankYouView):
             'has_enrollment_code_product': has_enrollment_code_product,
             'disable_back_button': self.request.GET.get('disable_back_button', 0),
         })
-        context['course_data'] = self._get_course_data(order.basket.all_lines())
+        context['course_data'] = {}
+        for line in order.basket.all_lines():
+            context['course_data'].update({
+                  str(line.product.course.id): self._get_course_data(line)
+            })
 
         if self.request.GET.get('lumsx_checkout', 0) == '1':
             context['lumsx_checkout'] = 'true'

@@ -112,17 +112,6 @@ class XStackOrderCompletionView(EdxOrderPlacementMixin, APIView):
     def payment_processor(self):
         return XStack(self.request.site)
 
-    @staticmethod
-    def _send_email(user, course_key, site_configuration):
-        """Send email notification to learner after enrollment."""
-        api_url = site_configuration.commerce_api_client
-        logger.info('username:{} course_key:{}'.format(user, course_key))
-        try:
-            api_resource_name = 'enrollment_mail/{}/{}'.format(user, course_key)
-            endpoint = getattr(api_url, api_resource_name)
-            endpoint().get()
-        except Exception:  # pylint: disable=broad-except
-            logger.exception('Failed to send enrollment notification for [%s] [%s] from LMS.', user, course_key)
 
     def post(self, request):
         payment_intent_id = request.data.get('payment_intent_id')
@@ -168,7 +157,8 @@ class XStackOrderCompletionView(EdxOrderPlacementMixin, APIView):
         except Exception:  # pylint: disable=broad-except
             self.log_order_placement_exception(basket.order_number, basket.id)
 
-        self._send_email(basket.owner.username, basket.all_lines()[0].product.course.id, request.site.siteconfiguration)
+        for line in basket.all_lines():
+            self._send_email(basket.owner.username, line.product.course.id, request.site.siteconfiguration)
         receipt_url = get_receipt_page_url(
             order_number=basket.order_number,
             site_configuration=basket.site.siteconfiguration,

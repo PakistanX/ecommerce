@@ -385,3 +385,14 @@ class EdxOrderPlacementMixin(six.with_metaclass(abc.ABCMeta, OrderPlacementMixin
                     for __ in range(offer_assignments_available)
                 ]
                 OfferAssignment.objects.bulk_create(assignments)
+
+    def _send_email(self, user, course_key, site_configuration):
+        """Send email notification to learner after enrollment."""
+        api_resource_name = 'enrollment_mail/{}/{}'.format(user, course_key)
+        api_url = site_configuration.commerce_api_client
+        logger.info('username:{} course_key:{}'.format(user, course_key))
+        try:
+            endpoint = getattr(api_url, api_resource_name)
+            endpoint().get()
+        except Exception:  # pylint: disable=broad-except
+            logger.exception('Failed to send enrollment notification for [%s] [%s] from LMS.', user, course_key)
