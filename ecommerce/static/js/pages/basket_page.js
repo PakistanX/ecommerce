@@ -347,6 +347,7 @@ define([
                 });
                 $('#checkoutBtn-xstack').hide();
                 $('#checkoutBtn-postex_cod').hide();
+                $('#checkoutBtn-kalpay').hide();
                 $('input[name="payment"]').on('change', function() {
                     const selectedOption = $('input[name="payment"]:checked').val();
                     if (selectedOption) {
@@ -354,10 +355,17 @@ define([
                             case 'xstack':
                                 $('#checkoutBtn-postex_cod').hide();
                                 $('#checkoutBtn-xstack').show();
+                                $('#checkoutBtn-kalpay').hide();
                                 break;
                             case 'postex_cod':
                                 $('#checkoutBtn-xstack').hide();
                                 $('#checkoutBtn-postex_cod').show();
+                                $('#checkoutBtn-kalpay').hide();
+                                break;
+                            case 'kalpay':
+                                $('#checkoutBtn-postex_cod').hide();
+                                $('#checkoutBtn-xstack').hide();
+                                $('#checkoutBtn-kalpay').show();
                                 break;
                         }
                     }
