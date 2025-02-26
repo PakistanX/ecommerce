@@ -7,6 +7,7 @@ from collections import OrderedDict
 import requests
 
 from django.http import HttpResponseBadRequest, JsonResponse
+from django.contrib.auth import get_user_model
 from ecommerce.extensions.api.serializers import PaymentPostBackSerializer
 from ecommerce.extensions.basket.utils import apply_offers_on_basket, basket_add_organization_attribute
 from ecommerce.extensions.checkout.mixins import EdxOrderPlacementMixin
@@ -18,6 +19,8 @@ from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 PaymentProcessorResponse = get_model('payment', 'PaymentProcessorResponse')
+Order = get_model('order', 'Order')
+User = get_user_model()
 
 def _get_basket(request, basket_id):
         """
@@ -53,7 +56,8 @@ class XStackPostBackView(APIView):
         data = PaymentPostBackSerializer(data=request.data)
         data.is_valid(raise_exception=True)
 
-        basket = _get_basket(request, request.data.get('basket_id'))
+        basket_id = request.data.get('basket_id')
+        basket = _get_basket(request, )
         if not basket:
             logger.exception('Basket not found for ID {}'.format(request.data.get('basket_id')))
             return HttpResponseBadRequest('Unable to find linked basket')
@@ -74,7 +78,7 @@ class XStackPostBackView(APIView):
                 ('province', data.data['state']),
                 ('zip', data.data['post_code'])
             ])),
-            ("metadata", OrderedDict([('order_reference', "{}-{}".format(request.user.id, basket.order_number))]))
+            ("metadata", OrderedDict([('order_reference', "{}-{}-{}".format(request.user.id, basket.order_number, basket_id))]))
         ])
 
         json_body = json.dumps(payload, separators=(',', ':')).encode('utf-8')
@@ -94,6 +98,7 @@ class XStackPostBackView(APIView):
 
         try:
             if payment_intent_create_res['responseStatus'] == 'OK':
+                request.session.pop('checkout_data', None)
                 return JsonResponse(
                     data={
                         'encryptionKey':payment_intent_create_res['data']['encryptionKey'],
@@ -105,6 +110,7 @@ class XStackPostBackView(APIView):
         except Exception as e:
             logger.exception('Failed to create xstack payment intent {}, response {}.', basket.order_number, payment_intent_create_res)
             return HttpResponseBadRequest('Some error occurred during payment intent creation, '+payment_intent_create_res['message'])
+
 
 class XStackOrderCompletionView(EdxOrderPlacementMixin, APIView):
 
@@ -164,11 +170,81 @@ class XStackOrderCompletionView(EdxOrderPlacementMixin, APIView):
             site_configuration=basket.site.siteconfiguration,
             disable_back_button=True,
         )
-        request.session.pop('checkout_data', None)
 
         return JsonResponse(
             data={
                 'receipt_url':receipt_url,
+            },
+            status=HTTP_200_OK
+        )
+
+
+class XStackWebhookOrderView(EdxOrderPlacementMixin, APIView):
+
+    @property
+    def payment_processor(self):
+        return XStack(self.request.site)
+
+    def post(self, request):
+        payment_intent_id = request.data.get('payment_intent_id')
+        order_reference = request.data.get('metadata').get('order_reference').split('-')
+        basket_id = order_reference[-1]
+        order_number = '{}-{}'.format(order_reference[1], order_reference[2])
+        user_id = order_reference[0]
+        user = User.object.get(id=user_id)
+        request.user = user
+
+        order = Order.objects.filter(number=order_number).exists()
+        if order:
+            logger.exception('Order already exists. Order ID {}'.format(order_number))
+            return HttpResponseBadRequest('Order already exists')
+
+        basket = _get_basket(request, basket_id)
+        if not basket:
+            logger.exception('Basket not found for ID {}'.format(basket_id))
+            return HttpResponseBadRequest('Unable to find linked basket')
+
+        headers = {
+            "x-api-key": self.payment_processor.configuration['secret_key'],
+            "x-account-id": self.payment_processor.configuration['account_id'],
+        }
+        payment_intent_retrieve_res = requests.get(
+            self.payment_processor.configuration['payment_intent_retrieve_url']+payment_intent_id,
+            headers=headers,
+        )
+        payment_intent_retrieve_res = payment_intent_retrieve_res.json()
+
+        try:
+            self.handle_payment(
+                response={
+                    'payment_intent_response': payment_intent_retrieve_res,
+                    'remote': request.META.get('REMOTE_ADDR'),
+                    'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
+                    'host': request.META.get('HTTP_HOST'),
+                },
+                basket=basket,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.info('Payment error in processing {}'.format(basket_id))
+            return HttpResponseBadRequest(str(e))
+
+        try:
+            order = self.create_order(request, basket)
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning('Exception in create order for {}'.format(basket_id))
+            return HttpResponseBadRequest(str(e))
+
+        try:
+            self.handle_post_order(order)
+        except Exception:  # pylint: disable=broad-except
+            self.log_order_placement_exception(basket.order_number, basket.id)
+
+        for line in basket.all_lines():
+            self._send_email(basket.owner.username, line.product.course.id, request.site.siteconfiguration)
+
+        return JsonResponse(
+            data={
+                'success': True,
             },
             status=HTTP_200_OK
         )

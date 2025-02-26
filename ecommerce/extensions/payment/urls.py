@@ -35,6 +35,7 @@ POSTEX_URLS = [
 XSTACK_URLS = [
     url(r'^postback/$', xstack.XStackPostBackView.as_view(), name='xstack_payment_intent'),
     url(r'^order$', xstack.XStackOrderCompletionView.as_view(), name='xstack_order_completion'),
+    url(r'^webhook$', xstack.XStackWebhookOrderView.as_view(), name='xstack_order_webhook'),
 ]
 
 SDN_URLS = [
