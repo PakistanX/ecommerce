@@ -57,7 +57,7 @@ class XStackPostBackView(APIView):
         data.is_valid(raise_exception=True)
 
         basket_id = request.data.get('basket_id')
-        basket = _get_basket(request, )
+        basket = _get_basket(request, basket_id)
         if not basket:
             logger.exception('Basket not found for ID {}'.format(request.data.get('basket_id')))
             return HttpResponseBadRequest('Unable to find linked basket')
