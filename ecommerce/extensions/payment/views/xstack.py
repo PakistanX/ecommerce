@@ -29,7 +29,7 @@ def _get_basket(request, basket_id):
         try:
             basket = request.user.baskets.get(id=basket_id)
         except Exception:  # pylint: disable=broad-except
-            logger.exception(u"Unexpected error during basket retrieval while executing PostEx COD transaction.")
+            logger.exception(u"Unexpected error during basket retrieval while executing xPay transaction.")
             return None
         basket.strategy = request.strategy
         basket_add_organization_attribute(basket, request.GET)
@@ -57,9 +57,9 @@ class XStackPostBackView(APIView):
         data.is_valid(raise_exception=True)
 
         basket_id = request.data.get('basket_id')
-        basket = _get_basket(request, )
+        basket = _get_basket(request, basket_id)
         if not basket:
-            logger.exception('Basket not found for ID {}'.format(request.data.get('basket_id')))
+            logger.exception('Basket not found for ID {}'.format(basket_id))
             return HttpResponseBadRequest('Unable to find linked basket')
 
         payload = OrderedDict([
@@ -191,7 +191,7 @@ class XStackWebhookOrderView(EdxOrderPlacementMixin, APIView):
         basket_id = order_reference[-1]
         order_number = '{}-{}'.format(order_reference[1], order_reference[2])
         user_id = order_reference[0]
-        user = User.object.get(id=user_id)
+        user = User.objects.get(id=user_id)
         request.user = user
 
         order = Order.objects.filter(number=order_number).exists()
