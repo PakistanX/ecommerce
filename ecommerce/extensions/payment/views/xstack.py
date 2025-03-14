@@ -78,7 +78,7 @@ class XStackPostBackView(APIView):
                 ('province', data.data['state']),
                 ('zip', data.data['post_code'])
             ])),
-            ("metadata", OrderedDict([('order_reference', "{}-{}-{}".format(request.user.id, basket.order_number, basket_id))]))
+            ("metadata", OrderedDict([('order_reference', "{}-{}".format(request.user.id, basket.order_number))]))
         ])
 
         json_body = json.dumps(payload, separators=(',', ':')).encode('utf-8')
@@ -139,32 +139,15 @@ class XStackOrderCompletionView(EdxOrderPlacementMixin, APIView):
         payment_intent_retrieve_res = payment_intent_retrieve_res.json()
 
         try:
-            self.handle_payment(
-                response={
-                    'payment_intent_response': payment_intent_retrieve_res,
-                    'remote': request.META.get('REMOTE_ADDR'),
-                    'fowarded': request.META.get('HTTP_X_FORWARDED_FOR'),
-                    'host': request.META.get('HTTP_HOST'),
-                },
-                basket=basket,
-            )
+            if payment_intent_retrieve_res['data']['pi_status'] != 'succeeded':
+                msg = 'Payment unsuccessful for payment ID {}'.format(
+                    payment_intent_retrieve_res['data']['_id'],
+                )
+                raise Exception(msg)
         except Exception as e:  # pylint: disable=broad-except
             logger.info('Payment error in processing {}'.format(basket_id))
             return HttpResponseBadRequest(str(e))
 
-        try:
-            order = self.create_order(request, basket)
-        except Exception as e:  # pylint: disable=broad-except
-            logger.warning('Exception in create order for {}'.format(basket_id))
-            return HttpResponseBadRequest(str(e))
-
-        try:
-            self.handle_post_order(order)
-        except Exception:  # pylint: disable=broad-except
-            self.log_order_placement_exception(basket.order_number, basket.id)
-
-        for line in basket.all_lines():
-            self._send_email(basket.owner.username, line.product.course.id, request.site.siteconfiguration)
         receipt_url = get_receipt_page_url(
             order_number=basket.order_number,
             site_configuration=basket.site.siteconfiguration,
@@ -188,7 +171,7 @@ class XStackWebhookOrderView(EdxOrderPlacementMixin, APIView):
     def post(self, request):
         payment_intent_id = request.data.get('payment_intent_id')
         order_reference = request.data.get('metadata').get('order_reference').split('-')
-        basket_id = order_reference[-1]
+        basket_id = order_reference[-1][2:]
         order_number = '{}-{}'.format(order_reference[1], order_reference[2])
         user_id = order_reference[0]
         user = User.objects.get(id=user_id)
