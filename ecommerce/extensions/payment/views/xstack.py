@@ -171,6 +171,11 @@ class XStackWebhookOrderView(EdxOrderPlacementMixin, APIView):
     def post(self, request):
         payment_intent_id = request.data.get('payment_intent_id')
         order_reference = request.data.get('metadata').get('order_reference').split('-')
+
+        if order_reference[1] != 'ILMX':
+            logger.exception('Ignoring custom payment link webhook call {}'.format(payment_intent_id))
+            return HttpResponseBadRequest('Ignoring custom payment link webhook call {}'.format(payment_intent_id))
+
         basket_id = order_reference[-1][2:]
         order_number = '{}-{}'.format(order_reference[1], order_reference[2])
         user_id = order_reference[0]
