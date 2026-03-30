@@ -260,7 +260,7 @@ class PostExCODPaymentView(EdxOrderPlacementMixin, APIView):
         """
         api_url = self.payment_processor.configuration['create_order_url']
         api_key = self.payment_processor.configuration['key']
-        pickup_address_code = self.payment_processor.configuration['pickup_address_code']
+        pickup_address_code = '003' # self.payment_processor.configuration['pickup_address_code']
         fixed_delivery_charges = self.payment_processor.configuration['fixed_delivery_charges']
         data = PaymentPostBackSerializer(data=request.data)
         data.is_valid(raise_exception=True)
